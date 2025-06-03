@@ -2,13 +2,13 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/database';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Missing Supabase environment variables. Check your .env file.');
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Missing Supabase environment variables');
 }
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseKey, {
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
@@ -39,6 +39,50 @@ export const handleSupabaseError = (error: any): string => {
   };
   
   return errorMessages[error.code] || error.message || 'An unexpected error occurred';
+};
+
+// Create realtime subscription
+export const createRealtimeSubscription = (
+  table: string,
+  callback: (payload: any) => void,
+  filter?: string
+) => {
+  let channel = supabase.channel(`realtime_${table}_${Date.now()}`);
+  
+  if (filter) {
+    channel = channel.on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table,
+      filter
+    }, callback);
+  } else {
+    channel = channel.on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table
+    }, callback);
+  }
+  
+  return channel.subscribe();
+};
+
+// Database health check
+export const checkDatabaseConnection = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('count')
+      .limit(1);
+    
+    if (error) throw error;
+    return { healthy: true };
+  } catch (error) {
+    return { 
+      healthy: false, 
+      error: handleSupabaseError(error) 
+    };
+  }
 };
 
 export default supabase;
