@@ -117,3 +117,5 @@ export const Footer: React.FC<FooterProps> = ({ className = '' }) => {
     </footer>
   );
 };
+
+export default Footer;

@@ -273,3 +273,5 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     </header>
   );
 };
+
+export default AppHeader;

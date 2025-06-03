@@ -64,3 +64,5 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
     </div>
   );
 };
+
+export default AppLayout;
