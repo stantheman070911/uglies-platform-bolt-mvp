@@ -1,158 +1,271 @@
 import { useState, useEffect, createContext, useContext } from 'react';
-import { 
-  signIn, 
-  signUp, 
-  signOut, 
-  getCurrentUser 
-} from '@/services/auth';
-import type { User, LoginCredentials, RegisterData, AuthState } from '@/types/auth';
-import { supabase } from '@/services/supabase';
+import { supabase, handleSupabaseError } from '@/services/supabase';
+import type { User, LoginCredentials, RegisterData, UserRole } from '@/types/auth';
 
-// Create Auth context
-const AuthContext = createContext<{
+interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   error: string | null;
-  login: (credentials: LoginCredentials) => Promise<boolean>;
-  register: (data: RegisterData) => Promise<boolean>;
-  logout: () => Promise<boolean>;
-}>({
+  isAuthenticated: boolean;
+  signIn: (email: string, password: string) => Promise<{ success: boolean; error?: any }>;
+  signUp: (data: RegisterData) => Promise<{ success: boolean; error?: any }>;
+  signOut: () => Promise<void>;
+  updateProfile: (updates: Partial<User>) => Promise<{ success: boolean; error?: any }>;
+  checkPermissions: () => Promise<{
+    canCreateGroups: boolean;
+    canJoinGroups: boolean;
+    canCreateProducts: boolean;
+    canManageGroups: boolean;
+  }>;
+}
+
+const AuthContext = createContext<AuthContextType>({
   user: null,
   isLoading: true,
   error: null,
-  login: async () => false,
-  register: async () => false,
-  logout: async () => false,
+  isAuthenticated: false,
+  signIn: async () => ({ success: false }),
+  signUp: async () => ({ success: false }),
+  signOut: async () => {},
+  updateProfile: async () => ({ success: false }),
+  checkPermissions: async () => ({
+    canCreateGroups: false,
+    canJoinGroups: false,
+    canCreateProducts: false,
+    canManageGroups: false
+  })
 });
 
-// Auth Provider component
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [authState, setAuthState] = useState<AuthState>({
-    user: null,
-    isLoading: true,
-    error: null,
-  });
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // Check for current user on initial load
     const checkUser = async () => {
       try {
-        const { data, error } = await getCurrentUser();
+        const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
         
-        if (error) {
-          setAuthState({
-            user: null,
-            isLoading: false,
-            error: null, // Don't show error on initial load
-          });
-          return;
-        }
+        if (authError) throw authError;
 
-        setAuthState({
-          user: data,
-          isLoading: false,
-          error: null,
-        });
+        if (authUser) {
+          const { data: profile, error: profileError } = await supabase
+            .from('users')
+            .select(`
+              *,
+              products:products(count),
+              groups:group_buys(count),
+              participations:group_participants(count)
+            `)
+            .eq('id', authUser.id)
+            .single();
+
+          if (profileError) throw profileError;
+
+          setUser({
+            id: profile.id,
+            email: profile.email,
+            role: profile.role as UserRole,
+            displayName: profile.display_name,
+            avatarUrl: profile.avatar_url,
+            bio: profile.bio,
+            region: profile.region,
+            createdAt: profile.created_at,
+            lastLogin: profile.last_login,
+            isVerified: profile.is_verified,
+            isActive: profile.is_active,
+            stats: {
+              products: profile.products?.[0]?.count || 0,
+              groups: profile.groups?.[0]?.count || 0,
+              participations: profile.participations?.[0]?.count || 0
+            }
+          });
+        }
       } catch (err) {
-        setAuthState({
-          user: null,
-          isLoading: false,
-          error: null, // Don't show error on initial load
-        });
+        console.error('Auth check error:', err);
+        setUser(null);
+      } finally {
+        setIsLoading(false);
       }
     };
-    
+
     checkUser();
 
     // Subscribe to auth changes
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_IN' && session?.user) {
-          const { data } = await getCurrentUser();
-          setAuthState({
-            user: data,
-            isLoading: false,
-            error: null,
-          });
-        } else if (event === 'SIGNED_OUT') {
-          setAuthState({
-            user: null,
-            isLoading: false,
-            error: null,
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        const { data: profile } = await supabase
+          .from('users')
+          .select(`
+            *,
+            products:products(count),
+            groups:group_buys(count),
+            participations:group_participants(count)
+          `)
+          .eq('id', session.user.id)
+          .single();
+
+        if (profile) {
+          setUser({
+            id: profile.id,
+            email: profile.email,
+            role: profile.role as UserRole,
+            displayName: profile.display_name,
+            avatarUrl: profile.avatar_url,
+            bio: profile.bio,
+            region: profile.region,
+            createdAt: profile.created_at,
+            lastLogin: profile.last_login,
+            isVerified: profile.is_verified,
+            isActive: profile.is_active,
+            stats: {
+              products: profile.products?.[0]?.count || 0,
+              groups: profile.groups?.[0]?.count || 0,
+              participations: profile.participations?.[0]?.count || 0
+            }
           });
         }
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
       }
-    );
+    });
 
-    // Clean up subscription
     return () => {
       authListener.subscription.unsubscribe();
     };
   }, []);
 
-  // Login function
-  const login = async (credentials: LoginCredentials): Promise<boolean> => {
-    setAuthState({ ...authState, isLoading: true, error: null });
-    
-    const { data, error } = await signIn(credentials);
-    
-    setAuthState({
-      user: data,
-      isLoading: false,
-      error: error,
-    });
-    
-    return !error;
-  };
-
-  // Register function
-  const register = async (registerData: RegisterData): Promise<boolean> => {
-    setAuthState({ ...authState, isLoading: true, error: null });
-    
-    const { data, error } = await signUp(registerData);
-    
-    setAuthState({
-      user: data,
-      isLoading: false,
-      error: error,
-    });
-    
-    return !error;
-  };
-
-  // Logout function
-  const logout = async (): Promise<boolean> => {
-    setAuthState({ ...authState, isLoading: true, error: null });
-    
-    const { error } = await signOut();
-    
-    if (error) {
-      setAuthState({
-        ...authState,
-        isLoading: false,
-        error: error,
+  const signIn = async (email: string, password: string) => {
+    try {
+      setError(null);
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password
       });
-      return false;
+
+      if (signInError) throw signInError;
+
+      return { success: true, user: data.user };
+    } catch (error) {
+      const message = handleSupabaseError(error);
+      setError(message);
+      return { success: false, error: message };
     }
-    
-    setAuthState({
-      user: null,
-      isLoading: false,
-      error: null,
-    });
-    
-    return true;
+  };
+
+  const signUp = async (data: RegisterData) => {
+    try {
+      setError(null);
+      
+      // Create auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          data: {
+            display_name: data.displayName,
+            role: data.role
+          }
+        }
+      });
+
+      if (authError) throw authError;
+
+      if (!authData.user) {
+        throw new Error('User creation failed');
+      }
+
+      // Create user profile
+      const { error: profileError } = await supabase
+        .from('users')
+        .insert({
+          id: authData.user.id,
+          email: data.email,
+          role: data.role,
+          display_name: data.displayName,
+          region: data.region,
+          bio: data.bio || null,
+          is_verified: false,
+          is_active: true,
+          created_at: new Date().toISOString()
+        });
+
+      if (profileError) throw profileError;
+
+      return { success: true };
+    } catch (error) {
+      const message = handleSupabaseError(error);
+      setError(message);
+      return { success: false, error: message };
+    }
+  };
+
+  const signOut = async () => {
+    try {
+      setError(null);
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      setUser(null);
+    } catch (error) {
+      setError(handleSupabaseError(error));
+    }
+  };
+
+  const updateProfile = async (updates: Partial<User>) => {
+    try {
+      if (!user) throw new Error('No authenticated user');
+
+      const { error } = await supabase
+        .from('users')
+        .update({
+          display_name: updates.displayName,
+          bio: updates.bio,
+          avatar_url: updates.avatarUrl,
+          region: updates.region,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      setUser(prev => prev ? { ...prev, ...updates } : null);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: handleSupabaseError(error) };
+    }
+  };
+
+  const checkPermissions = async () => {
+    if (!user) {
+      return {
+        canCreateGroups: false,
+        canJoinGroups: false,
+        canCreateProducts: false,
+        canManageGroups: false
+      };
+    }
+
+    return {
+      canCreateGroups: user.isActive && user.role !== 'farmer',
+      canJoinGroups: user.isActive,
+      canCreateProducts: user.role === 'farmer' && user.isVerified,
+      canManageGroups: ['coordinator', 'admin'].includes(user.role)
+    };
   };
 
   return (
     <AuthContext.Provider
       value={{
-        user: authState.user,
-        isLoading: authState.isLoading,
-        error: authState.error,
-        login,
-        register,
-        logout,
+        user,
+        isLoading,
+        error,
+        isAuthenticated: !!user,
+        signIn,
+        signUp,
+        signOut,
+        updateProfile,
+        checkPermissions
       }}
     >
       {children}
@@ -160,13 +273,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
-// Hook for using auth context
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
-  
   return context;
 };
