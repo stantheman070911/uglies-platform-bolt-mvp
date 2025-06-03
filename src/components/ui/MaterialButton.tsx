@@ -1,33 +1,87 @@
 import React, { forwardRef, ButtonHTMLAttributes } from 'react';
-import { Loader2, ChevronRight } from 'lucide-react';
+import { 
+  Loader2, ChevronRight, Plus, Check, X, Download, Upload, Edit, 
+  Trash2, Heart, Share2, Settings, Bell, Mail, Calendar, Search,
+  User, ShoppingCart, ArrowRight, ArrowLeft, ExternalLink, Link,
+  Save, Send, Filter, Home, Menu, Globe, Lock, Unlock, Star
+} from 'lucide-react';
 
 interface MaterialButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'size'> {
   variant?: 'filled' | 'outlined' | 'text' | 'elevated' | 'tonal';
   size?: 'small' | 'medium' | 'large' | 'xl';
   color?: 'primary' | 'secondary' | 'tertiary' | 'success' | 'warning' | 'error' | 'surface';
   icon?: 'none' | 'leading' | 'trailing' | 'only';
+  iconType?: 'arrow' | 'plus' | 'check' | 'close' | 'download' | 'upload' | 'edit' | 'delete' | 
+    'heart' | 'share' | 'settings' | 'bell' | 'mail' | 'calendar' | 'search' | 'user' | 'cart' |
+    'link' | 'save' | 'send' | 'filter' | 'home' | 'menu' | 'globe' | 'lock' | 'star' | 'custom';
+  customIcon?: React.ReactNode;
   loading?: boolean;
   fullWidth?: boolean;
   rounded?: 'none' | 'small' | 'medium' | 'large' | 'full';
   elevation?: 0 | 1 | 2 | 3 | 4 | 5;
   ripple?: boolean;
+  href?: string;
+  target?: string;
   testId?: string;
+  ariaLabel?: string;
+  badge?: string | number;
+  tooltipText?: string;
 }
+
+const iconComponents = {
+  arrow: ChevronRight,
+  plus: Plus,
+  check: Check,
+  close: X,
+  download: Download,
+  upload: Upload,
+  edit: Edit,
+  delete: Trash2,
+  heart: Heart,
+  share: Share2,
+  settings: Settings,
+  bell: Bell,
+  mail: Mail,
+  calendar: Calendar,
+  search: Search,
+  user: User,
+  cart: ShoppingCart,
+  arrowRight: ArrowRight,
+  arrowLeft: ArrowLeft,
+  link: Link,
+  externalLink: ExternalLink,
+  save: Save,
+  send: Send,
+  filter: Filter,
+  home: Home,
+  menu: Menu,
+  globe: Globe,
+  lock: Lock,
+  unlock: Unlock,
+  star: Star
+};
 
 export const MaterialButton = forwardRef<HTMLButtonElement, MaterialButtonProps>(({
   variant = 'filled',
   size = 'medium',
   color = 'primary',
   icon = 'none',
+  iconType = 'arrow',
+  customIcon,
   loading = false,
   fullWidth = false,
   rounded = 'medium',
   elevation = 1,
   ripple = true,
+  href,
+  target,
   children,
   className = '',
   disabled = false,
   testId = 'material-button',
+  ariaLabel,
+  badge,
+  tooltipText,
   onClick,
   ...props
 }, ref) => {
@@ -37,6 +91,13 @@ export const MaterialButton = forwardRef<HTMLButtonElement, MaterialButtonProps>
     medium: 'px-4 py-2 text-base min-h-10',
     large: 'px-6 py-3 text-lg min-h-12',
     xl: 'px-8 py-4 text-xl min-h-14'
+  };
+
+  const iconSizes = {
+    small: 'w-4 h-4',
+    medium: 'w-5 h-5',
+    large: 'w-6 h-6',
+    xl: 'w-7 h-7'
   };
 
   // Rounded configurations
@@ -122,8 +183,26 @@ export const MaterialButton = forwardRef<HTMLButtonElement, MaterialButtonProps>
 
   // Ripple effect
   const rippleClasses = ripple && !disabled && !loading 
-    ? 'relative overflow-hidden transition-all duration-200 ease-out before:absolute before:inset-0 before:bg-white before:opacity-0 hover:before:opacity-10 active:before:opacity-20' 
+    ? 'relative overflow-hidden before:absolute before:inset-0 before:bg-white before:opacity-0 before:transition-opacity hover:before:opacity-10 active:before:opacity-20' 
     : '';
+
+  // Icon rendering
+  const renderIcon = () => {
+    if (loading) {
+      return <Loader2 className={`${iconSizes[size]} animate-spin`} />;
+    }
+
+    if (customIcon) {
+      return <span className={iconSizes[size]}>{customIcon}</span>;
+    }
+
+    if (iconType && iconComponents[iconType]) {
+      const IconComponent = iconComponents[iconType];
+      return <IconComponent className={iconSizes[size]} />;
+    }
+
+    return null;
+  };
 
   // Combined classes
   const combinedClasses = `
@@ -141,19 +220,54 @@ export const MaterialButton = forwardRef<HTMLButtonElement, MaterialButtonProps>
     ${className}
   `.trim().replace(/\s+/g, ' ');
 
+  // Badge rendering
+  const renderBadge = () => {
+    if (!badge) return null;
+
+    return (
+      <span className="absolute -top-1 -right-1 bg-error-500 text-white text-xs rounded-full min-w-5 h-5 flex items-center justify-center px-1">
+        {badge}
+      </span>
+    );
+  };
+
+  // Render as link if href provided
+  if (href) {
+    return (
+      <a
+        href={href}
+        target={target}
+        className={combinedClasses}
+        aria-label={ariaLabel}
+        title={tooltipText}
+        data-testid={testId}
+      >
+        <span className="relative">
+          {icon === 'leading' && renderIcon()}
+          {icon === 'only' ? renderIcon() : children}
+          {icon === 'trailing' && renderIcon()}
+          {renderBadge()}
+        </span>
+      </a>
+    );
+  }
+
   return (
     <button
       ref={ref}
       className={combinedClasses}
       disabled={disabled || loading}
       onClick={onClick}
+      aria-label={ariaLabel}
+      title={tooltipText}
       data-testid={testId}
       {...props}
     >
       <span className="relative flex items-center gap-2">
-        {icon === 'leading' && !loading && <ChevronRight className="w-5 h-5" />}
-        {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : children}
-        {icon === 'trailing' && !loading && <ChevronRight className="w-5 h-5" />}
+        {icon === 'leading' && renderIcon()}
+        {icon === 'only' ? renderIcon() : children}
+        {icon === 'trailing' && renderIcon()}
+        {renderBadge()}
       </span>
     </button>
   );
@@ -172,4 +286,32 @@ export const SecondaryButton = (props: Omit<MaterialButtonProps, 'variant' | 'co
 
 export const TextButton = (props: Omit<MaterialButtonProps, 'variant' | 'color'>) => (
   <MaterialButton variant="text" color="primary" {...props} />
+);
+
+export const SuccessButton = (props: Omit<MaterialButtonProps, 'variant' | 'color'>) => (
+  <MaterialButton variant="filled" color="success" {...props} />
+);
+
+export const WarningButton = (props: Omit<MaterialButtonProps, 'variant' | 'color'>) => (
+  <MaterialButton variant="filled" color="warning" {...props} />
+);
+
+export const ErrorButton = (props: Omit<MaterialButtonProps, 'variant' | 'color'>) => (
+  <MaterialButton variant="filled" color="error" {...props} />
+);
+
+export const IconButton = (props: Omit<MaterialButtonProps, 'icon'>) => (
+  <MaterialButton icon="only" rounded="full" {...props} />
+);
+
+export const FloatingActionButton = (props: Omit<MaterialButtonProps, 'variant' | 'elevation' | 'rounded'>) => (
+  <MaterialButton 
+    variant="filled" 
+    elevation={3} 
+    rounded="full" 
+    size="large"
+    icon="only"
+    className="fixed bottom-6 right-6 z-50"
+    {...props} 
+  />
 );
