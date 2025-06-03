@@ -1,21 +1,20 @@
 import React, { forwardRef, HTMLAttributes } from 'react';
-import { MoreVertical, Heart, Share2, Bookmark, ExternalLink } from 'lucide-react';
+import { MoreVertical, Heart, Share2, Bookmark, ExternalLink, MapPin, Users, Clock, Star } from 'lucide-react';
 
 interface MaterialCardProps extends HTMLAttributes<HTMLDivElement> {
   variant?: 'elevated' | 'filled' | 'outlined';
   elevation?: 0 | 1 | 2 | 3 | 4 | 5;
-  padding?: 'none' | 'small' | 'medium' | 'large' | 'xl';
-  rounded?: 'none' | 'small' | 'medium' | 'large' | 'xl';
+  padding?: 'none' | 'small' | 'medium' | 'large';
+  rounded?: 'none' | 'small' | 'medium' | 'large';
   interactive?: boolean;
   header?: React.ReactNode;
   media?: React.ReactNode;
   footer?: React.ReactNode;
   actions?: React.ReactNode;
-  menu?: React.ReactNode;
   badge?: React.ReactNode;
   overlay?: React.ReactNode;
   aspectRatio?: '1:1' | '4:3' | '16:9' | '3:2' | 'auto';
-  hoverEffect?: 'none' | 'lift' | 'glow' | 'scale' | 'shadow';
+  hoverEffect?: 'none' | 'lift' | 'glow' | 'scale';
   loading?: boolean;
   testId?: string;
 }
@@ -30,7 +29,6 @@ export const MaterialCard = forwardRef<HTMLDivElement, MaterialCardProps>(({
   media,
   footer,
   actions,
-  menu,
   badge,
   overlay,
   aspectRatio = 'auto',
@@ -45,7 +43,7 @@ export const MaterialCard = forwardRef<HTMLDivElement, MaterialCardProps>(({
   
   // Variant configurations
   const variantClasses = {
-    elevated: 'bg-white',
+    elevated: 'bg-white shadow-elevation-1',
     filled: 'bg-surface-100',
     outlined: 'bg-white border border-surface-300'
   };
@@ -55,7 +53,7 @@ export const MaterialCard = forwardRef<HTMLDivElement, MaterialCardProps>(({
     0: 'shadow-none',
     1: 'shadow-elevation-1',
     2: 'shadow-elevation-2',
-    3: 'shadow-elevation-3', 
+    3: 'shadow-elevation-3',
     4: 'shadow-elevation-4',
     5: 'shadow-elevation-5'
   };
@@ -65,8 +63,7 @@ export const MaterialCard = forwardRef<HTMLDivElement, MaterialCardProps>(({
     none: 'p-0',
     small: 'p-3',
     medium: 'p-4',
-    large: 'p-6',
-    xl: 'p-8'
+    large: 'p-6'
   };
 
   // Rounded configurations
@@ -74,8 +71,7 @@ export const MaterialCard = forwardRef<HTMLDivElement, MaterialCardProps>(({
     none: 'rounded-none',
     small: 'rounded-sm',
     medium: 'rounded-lg',
-    large: 'rounded-xl',
-    xl: 'rounded-2xl'
+    large: 'rounded-xl'
   };
 
   // Aspect ratio configurations
@@ -90,10 +86,9 @@ export const MaterialCard = forwardRef<HTMLDivElement, MaterialCardProps>(({
   // Hover effect configurations
   const hoverEffectClasses = {
     none: '',
-    lift: 'hover:transform hover:-translate-y-1 hover:shadow-lg',
-    glow: 'hover:shadow-primary-lg hover:border-primary-300',
-    scale: 'hover:transform hover:scale-105',
-    shadow: 'hover:shadow-elevation-3'
+    lift: 'hover:transform hover:-translate-y-1 hover:shadow-lg transition-all duration-300',
+    glow: 'hover:shadow-primary-lg hover:border-primary-300 transition-all duration-300',
+    scale: 'hover:transform hover:scale-105 transition-all duration-300'
   };
 
   // Interactive configurations
@@ -107,7 +102,6 @@ export const MaterialCard = forwardRef<HTMLDivElement, MaterialCardProps>(({
       <div 
         className={`
           ${variantClasses[variant]}
-          ${elevationClasses[elevation]}
           ${roundedClasses[rounded]}
           ${paddingClasses[padding]}
           ${className}
@@ -116,7 +110,7 @@ export const MaterialCard = forwardRef<HTMLDivElement, MaterialCardProps>(({
       >
         <div className="animate-pulse">
           {media && (
-            <div className={`bg-surface-200 ${aspectRatioClasses[aspectRatio]} mb-4`} />
+            <div className={`bg-surface-200 ${aspectRatioClasses[aspectRatio]} mb-4 rounded`} />
           )}
           <div className="space-y-3">
             <div className="h-4 bg-surface-200 rounded w-3/4" />
@@ -134,7 +128,7 @@ export const MaterialCard = forwardRef<HTMLDivElement, MaterialCardProps>(({
       className={`
         relative overflow-hidden
         ${variantClasses[variant]}
-        ${elevationClasses[elevation]}
+        ${variant === 'elevated' ? elevationClasses[elevation] : ''}
         ${roundedClasses[rounded]}
         ${interactiveClasses}
         ${hoverEffectClasses[hoverEffect]}
@@ -151,19 +145,12 @@ export const MaterialCard = forwardRef<HTMLDivElement, MaterialCardProps>(({
         </div>
       )}
 
-      {/* Menu */}
-      {menu && (
-        <div className="absolute top-3 right-3 z-20">
-          {menu}
-        </div>
-      )}
-
       {/* Media Section */}
       {media && (
         <div className={`relative ${aspectRatioClasses[aspectRatio]} overflow-hidden`}>
           {media}
           {overlay && (
-            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent">
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end p-4">
               {overlay}
             </div>
           )}
@@ -172,28 +159,28 @@ export const MaterialCard = forwardRef<HTMLDivElement, MaterialCardProps>(({
 
       {/* Header Section */}
       {header && (
-        <div className={`${media ? 'p-4 pb-0' : paddingClasses[padding]} border-b border-surface-100`}>
+        <div className={`${media ? 'p-4 pb-0' : paddingClasses[padding]} ${footer || actions ? 'pb-2' : ''}`}>
           {header}
         </div>
       )}
 
       {/* Content Section */}
       {children && (
-        <div className={media || header ? 'p-4' : paddingClasses[padding]}>
+        <div className={`${(media || header) ? 'px-4 pb-4' : paddingClasses[padding]} ${(header && !media) ? 'pt-0' : ''}`}>
           {children}
         </div>
       )}
 
       {/* Footer Section */}
       {footer && (
-        <div className={`${paddingClasses[padding]} pt-0 border-t border-surface-100`}>
+        <div className="px-4 pb-4 pt-2">
           {footer}
         </div>
       )}
 
       {/* Actions Section */}
       {actions && (
-        <div className="px-4 py-3 bg-surface-50 border-t border-surface-100">
+        <div className="px-4 py-3 bg-surface-50 border-t border-surface-100 rounded-b-lg">
           {actions}
         </div>
       )}
@@ -203,12 +190,24 @@ export const MaterialCard = forwardRef<HTMLDivElement, MaterialCardProps>(({
 
 MaterialCard.displayName = 'MaterialCard';
 
-// Pre-configured card variants
-export const ProductCard = ({ product, onLike, onShare, ...props }: any) => (
+// Pre-configured variants for UGLIES Platform
+export const ProductCard = ({ 
+  product, 
+  onLike, 
+  onShare, 
+  onViewDetails,
+  ...props 
+}: {
+  product: any;
+  onLike?: () => void;
+  onShare?: () => void;
+  onViewDetails?: () => void;
+} & Omit<MaterialCardProps, 'media' | 'badge' | 'actions'>) => (
   <MaterialCard
     variant="elevated"
     hoverEffect="lift"
     interactive
+    onClick={onViewDetails}
     media={
       <img 
         src={product.images?.[0] || '/placeholder-product.jpg'} 
@@ -217,95 +216,163 @@ export const ProductCard = ({ product, onLike, onShare, ...props }: any) => (
       />
     }
     badge={
-      product.organic_certified && (
+      product.quality_grade === 'premium' ? (
+        <span className="bg-tertiary-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+          Premium
+        </span>
+      ) : product.organic_certified ? (
         <span className="bg-secondary-500 text-white px-2 py-1 rounded-full text-xs font-medium">
           Organic
         </span>
-      )
+      ) : null
     }
     actions={
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
-          <button onClick={onLike} className="p-1 hover:bg-surface-100 rounded">
+          <button 
+            onClick={(e) => { e.stopPropagation(); onLike?.(); }}
+            className="p-1 hover:bg-surface-100 rounded transition-colors"
+          >
             <Heart className="w-4 h-4 text-surface-400" />
           </button>
-          <button onClick={onShare} className="p-1 hover:bg-surface-100 rounded">
+          <button 
+            onClick={(e) => { e.stopPropagation(); onShare?.(); }}
+            className="p-1 hover:bg-surface-100 rounded transition-colors"
+          >
             <Share2 className="w-4 h-4 text-surface-400" />
           </button>
         </div>
         <span className="text-primary-600 font-bold text-lg">
-          ${product.price}
+          ${product.price.toFixed(2)}
         </span>
       </div>
     }
     {...props}
   >
-    <h3 className="font-semibold text-surface-900 mb-1">{product.name}</h3>
-    <p className="text-surface-600 text-sm line-clamp-2">{product.description}</p>
+    <div className="space-y-2">
+      <h3 className="font-semibold text-surface-900 line-clamp-1">{product.name}</h3>
+      <p className="text-surface-600 text-sm line-clamp-2">{product.description}</p>
+      <div className="flex items-center text-xs text-surface-500">
+        <MapPin className="w-3 h-3 mr-1" />
+        <span className="capitalize">{product.location?.address || 'Location not specified'}</span>
+      </div>
+    </div>
   </MaterialCard>
 );
 
-export const GroupCard = ({ group, onJoin, ...props }: any) => (
-  <MaterialCard
-    variant="elevated"
-    hoverEffect="glow"
-    border={`border-l-4 border-${group.status === 'active' ? 'secondary' : 'primary'}-500`}
-    {...props}
-  >
-    <div className="flex items-start justify-between mb-3">
-      <h3 className="font-semibold text-surface-900">{group.title}</h3>
-      <span className={`
-        px-2 py-1 rounded-full text-xs font-medium
-        ${group.status === 'active' ? 'bg-secondary-100 text-secondary-800' : 'bg-primary-100 text-primary-800'}
-      `}>
-        {group.status}
-      </span>
-    </div>
-    
-    <p className="text-surface-600 text-sm mb-4">{group.description}</p>
-    
-    <div className="space-y-2 mb-4">
-      <div className="flex justify-between text-sm">
-        <span>Progress</span>
-        <span>{group.current_quantity}/{group.target_quantity}</span>
-      </div>
-      <div className="w-full bg-surface-200 rounded-full h-2">
-        <div 
-          className="bg-secondary-500 h-2 rounded-full transition-all duration-300"
-          style={{ width: `${Math.min(100, (group.current_quantity / group.target_quantity) * 100)}%` }}
-        />
-      </div>
-    </div>
+export const GroupCard = ({ 
+  group, 
+  onJoin, 
+  onViewDetails,
+  ...props 
+}: {
+  group: any;
+  onJoin?: () => void;
+  onViewDetails?: () => void;
+} & Omit<MaterialCardProps, 'actions'>) => {
+  const progress = Math.min(100, (group.current_quantity / group.target_quantity) * 100);
+  const timeLeft = new Date(group.end_date).getTime() - new Date().getTime();
+  const hoursLeft = Math.max(0, Math.floor(timeLeft / (1000 * 60 * 60)));
 
-    <button 
-      onClick={onJoin}
-      className="w-full bg-primary-500 hover:bg-primary-600 text-white py-2 rounded-lg transition-colors"
+  return (
+    <MaterialCard
+      variant="elevated"
+      hoverEffect="glow"
+      interactive
+      onClick={onViewDetails}
+      className="border-l-4 border-secondary-500"
+      actions={
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4 text-sm text-surface-600">
+            <div className="flex items-center">
+              <Users className="w-4 h-4 mr-1" />
+              <span>{group.current_participants}/{group.max_participants}</span>
+            </div>
+            <div className="flex items-center">
+              <Clock className="w-4 h-4 mr-1" />
+              <span>{hoursLeft}h left</span>
+            </div>
+          </div>
+          <button 
+            onClick={(e) => { e.stopPropagation(); onJoin?.(); }}
+            className="bg-secondary-500 hover:bg-secondary-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            Join Group
+          </button>
+        </div>
+      }
+      {...props}
     >
-      Join Group
-    </button>
-  </MaterialCard>
-);
+      <div className="space-y-3">
+        <div className="flex items-start justify-between">
+          <h3 className="font-semibold text-surface-900 line-clamp-1">{group.name}</h3>
+          <span className={`
+            px-2 py-1 rounded-full text-xs font-medium
+            ${group.status === 'active' ? 'bg-secondary-100 text-secondary-800' : 'bg-primary-100 text-primary-800'}
+          `}>
+            {group.status}
+          </span>
+        </div>
+        
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm">
+            <span className="text-surface-600">Progress</span>
+            <span className="font-medium">{Math.round(progress)}%</span>
+          </div>
+          <div className="w-full bg-surface-200 rounded-full h-2">
+            <div 
+              className="bg-secondary-500 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
 
-export const ProfileCard = ({ user, ...props }: any) => (
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-surface-600">Current Price</span>
+          <span className="font-bold text-lg text-primary-600">${group.unit_price.toFixed(2)}</span>
+        </div>
+      </div>
+    </MaterialCard>
+  );
+};
+
+export const FarmerCard = ({ 
+  farmer, 
+  onViewProfile,
+  ...props 
+}: {
+  farmer: any;
+  onViewProfile?: () => void;
+} & Omit<MaterialCardProps, 'header' | 'media'>) => (
   <MaterialCard
     variant="outlined"
+    interactive
+    onClick={onViewProfile}
+    hoverEffect="lift"
     header={
       <div className="flex items-center space-x-3">
         <img 
-          src={user.avatar_url || '/placeholder-avatar.jpg'} 
-          alt={user.display_name}
-          className="w-12 h-12 rounded-full object-cover"
+          src={farmer.avatar_url || '/placeholder-avatar.jpg'} 
+          alt={farmer.display_name}
+          className="w-12 h-12 rounded-full object-cover border-2 border-secondary-100"
         />
-        <div>
-          <h3 className="font-semibold text-surface-900">{user.display_name}</h3>
-          <span className="text-surface-500 text-sm capitalize">{user.role}</span>
+        <div className="flex-1">
+          <h3 className="font-semibold text-surface-900">{farmer.display_name}</h3>
+          <div className="flex items-center text-sm text-surface-500">
+            <MapPin className="w-3 h-3 mr-1" />
+            <span className="capitalize">{farmer.location?.address || 'Location not specified'}</span>
+          </div>
+        </div>
+        <div className="flex items-center">
+          <Star className="w-4 h-4 text-tertiary-500 mr-1" />
+          <span className="text-sm font-medium">4.8</span>
         </div>
       </div>
     }
     {...props}
   >
-    {user.bio && (
-      <p className="text-surface-600 text-sm">{user.bio}</p>
+    {farmer.bio && (
+      <p className="text-surface-600 text-sm line-clamp-3">{farmer.bio}</p>
     )}
   </MaterialCard>
 );
