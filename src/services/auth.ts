@@ -11,28 +11,21 @@ export async function signIn(
       password: credentials.password,
     });
 
-    if (error) {
-      return {
-        data: null,
-        error: error.message,
-        status: 400,
-      };
-    }
+    if (error) throw error;
 
     // Fetch user profile data
     const { data: profileData, error: profileError } = await supabase
       .from('users')
-      .select('*')
+      .select(`
+        *,
+        products:products(count),
+        groups:group_buys(count),
+        participations:group_participants(count)
+      `)
       .eq('id', data.user.id)
       .single();
 
-    if (profileError) {
-      return {
-        data: null,
-        error: profileError.message,
-        status: 400,
-      };
-    }
+    if (profileError) throw profileError;
 
     // Transform database user to our app User type
     const user: User = {
@@ -57,7 +50,7 @@ export async function signIn(
     const error = err as Error;
     return {
       data: null,
-      error: error.message,
+      error: handleSupabaseError(error),
       status: 500,
     };
   }
@@ -73,20 +66,10 @@ export async function signUp(
       password: registerData.password,
     });
 
-    if (authError) {
-      return {
-        data: null,
-        error: authError.message,
-        status: 400,
-      };
-    }
+    if (authError) throw authError;
 
     if (!authData.user) {
-      return {
-        data: null,
-        error: 'User creation failed',
-        status: 400,
-      };
+      throw new Error('User creation failed');
     }
 
     // Create user profile
@@ -106,13 +89,7 @@ export async function signUp(
       .select()
       .single();
 
-    if (profileError) {
-      return {
-        data: null,
-        error: profileError.message,
-        status: 400,
-      };
-    }
+    if (profileError) throw profileError;
 
     // Transform database user to our app User type
     const user: User = {
@@ -137,7 +114,7 @@ export async function signUp(
     const error = err as Error;
     return {
       data: null,
-      error: error.message,
+      error: handleSupabaseError(error),
       status: 500,
     };
   }
@@ -147,13 +124,7 @@ export async function signOut(): Promise<ApiResponse<null>> {
   try {
     const { error } = await supabase.auth.signOut();
 
-    if (error) {
-      return {
-        data: null,
-        error: error.message,
-        status: 400,
-      };
-    }
+    if (error) throw error;
 
     return {
       data: null,
@@ -164,7 +135,7 @@ export async function signOut(): Promise<ApiResponse<null>> {
     const error = err as Error;
     return {
       data: null,
-      error: error.message,
+      error: handleSupabaseError(error),
       status: 500,
     };
   }
@@ -185,17 +156,16 @@ export async function getCurrentUser(): Promise<ApiResponse<User>> {
     // Fetch user profile data
     const { data: profileData, error: profileError } = await supabase
       .from('users')
-      .select('*')
+      .select(`
+        *,
+        products:products(count),
+        groups:group_buys(count),
+        participations:group_participants(count)
+      `)
       .eq('id', authData.user.id)
       .single();
 
-    if (profileError) {
-      return {
-        data: null,
-        error: profileError.message,
-        status: 400,
-      };
-    }
+    if (profileError) throw profileError;
 
     // Transform database user to our app User type
     const user: User = {
@@ -220,7 +190,7 @@ export async function getCurrentUser(): Promise<ApiResponse<User>> {
     const error = err as Error;
     return {
       data: null,
-      error: error.message,
+      error: handleSupabaseError(error),
       status: 500,
     };
   }

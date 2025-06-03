@@ -35,7 +35,11 @@ export const handleSupabaseError = (error: any): string => {
     '23505': 'This data already exists',
     '23503': 'Referenced data does not exist',
     '42501': 'Insufficient permissions',
-    'PGRST116': 'No data found'
+    'PGRST116': 'No data found',
+    'auth/invalid-email': 'Invalid email address',
+    'auth/wrong-password': 'Incorrect password',
+    'auth/user-not-found': 'User not found',
+    'auth/email-already-in-use': 'Email already in use'
   };
   
   return errorMessages[error.code] || error.message || 'An unexpected error occurred';
