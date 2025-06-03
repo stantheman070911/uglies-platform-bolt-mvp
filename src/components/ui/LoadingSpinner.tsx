@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Loader2, AlertCircle, Clock } from 'lucide-react';
+import { Loader2, AlertCircle, X, Clock } from 'lucide-react';
 
 interface LoadingSpinnerProps {
   size?: 'small' | 'medium' | 'large' | 'xl';
@@ -11,18 +11,23 @@ interface LoadingSpinnerProps {
   onTimeout?: () => void;
   showProgress?: boolean;
   progress?: number;
+  position?: 'center' | 'inline' | 'absolute' | 'fixed';
+  overlayColor?: 'light' | 'dark' | 'transparent';
+  zIndex?: number;
+  onCancel?: () => void;
+  showCancel?: boolean;
+  ariaLabel?: string;
+  minimumDuration?: number;
   className?: string;
   overlay?: boolean;
-  overlayColor?: 'light' | 'dark' | 'transparent';
-  position?: 'center' | 'inline' | 'absolute' | 'fixed';
-  zIndex?: number;
   testId?: string;
 }
 
 interface LoadingState {
-  isVisible: boolean;
   hasTimedOut: boolean;
   currentProgress: number;
+  isVisible: boolean;
+  startTime: number;
 }
 
 export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
@@ -35,17 +40,22 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   onTimeout,
   showProgress = false,
   progress = 0,
+  position = 'center',
+  overlayColor = 'light',
+  zIndex = 50,
+  onCancel,
+  showCancel = false,
+  ariaLabel,
+  minimumDuration = 0,
   className = '',
   overlay = false,
-  overlayColor = 'light',
-  position = 'center',
-  zIndex = 50,
   testId = 'loading-spinner'
 }) => {
   const [state, setState] = useState<LoadingState>({
-    isVisible: true,
     hasTimedOut: false,
-    currentProgress: progress
+    currentProgress: progress,
+    isVisible: true,
+    startTime: Date.now()
   });
 
   // Size configurations
@@ -118,6 +128,19 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
     }
   }, [progress, showProgress, state.currentProgress]);
 
+  // Minimum duration handling
+  useEffect(() => {
+    if (minimumDuration > 0) {
+      const elapsed = Date.now() - state.startTime;
+      if (elapsed < minimumDuration) {
+        const timer = setTimeout(() => {
+          setState(prev => ({ ...prev, isVisible: true }));
+        }, minimumDuration - elapsed);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [minimumDuration, state.startTime]);
+
   // Render spinner variants
   const renderSpinner = () => {
     switch (variant) {
@@ -148,24 +171,31 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
       
       case 'skeleton':
         return (
-          <div className="space-y-2">
-            <div className={`h-4 bg-${color}-200 rounded animate-pulse`} />
-            <div className={`h-4 bg-${color}-200 rounded animate-pulse w-3/4`} />
-            <div className={`h-4 bg-${color}-200 rounded animate-pulse w-1/2`} />
+          <div className="space-y-3 w-full max-w-sm">
+            <div className="flex items-center space-x-3">
+              <div className={`w-10 h-10 bg-${color === 'primary' ? 'surface' : color}-200 rounded-full animate-pulse`} />
+              <div className="flex-1 space-y-2">
+                <div className={`h-3 bg-${color === 'primary' ? 'surface' : color}-200 rounded animate-pulse`} />
+                <div className={`h-3 bg-${color === 'primary' ? 'surface' : color}-200 rounded animate-pulse w-2/3`} />
+              </div>
+            </div>
+            <div className={`h-4 bg-${color === 'primary' ? 'surface' : color}-200 rounded animate-pulse`} />
+            <div className={`h-4 bg-${color === 'primary' ? 'surface' : color}-200 rounded animate-pulse w-3/4`} />
+            <div className={`h-4 bg-${color === 'primary' ? 'surface' : color}-200 rounded animate-pulse w-1/2`} />
           </div>
         );
       
       case 'progress':
         return (
-          <div className="w-full">
+          <div className="w-full max-w-xs">
             <div className="bg-surface-200 rounded-full h-2 overflow-hidden">
               <div 
-                className={`h-full ${colorClasses[color]} transition-all duration-300 ease-out`}
+                className={`h-full bg-${color}-500 transition-all duration-300 ease-out`}
                 style={{ width: `${state.currentProgress}%` }}
               />
             </div>
             {showProgress && (
-              <p className="text-xs text-surface-500 mt-1 text-center">
+              <p className="text-xs text-surface-500 mt-2 text-center">
                 {Math.round(state.currentProgress)}%
               </p>
             )}
@@ -196,6 +226,10 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
     );
   }
 
+  if (!state.isVisible) {
+    return null;
+  }
+
   return (
     <div 
       className={`
@@ -207,22 +241,35 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
       data-testid={testId}
       role="status"
       aria-live="polite"
-      aria-label={message || 'Loading'}
+      aria-label={ariaLabel || message || 'Loading'}
     >
-      <div className="text-center">
+      <div className="text-center p-4">
         {renderSpinner()}
         
         {message && (
           <div className="mt-3">
-            <p className="text-surface-700 font-medium text-sm">
-              {message}
-            </p>
+            <p className="text-surface-700 font-medium text-sm">{message}</p>
             {submessage && (
-              <p className="text-surface-500 text-xs mt-1">
-                {submessage}
-              </p>
+              <p className="text-surface-500 text-xs mt-1">{submessage}</p>
             )}
           </div>
+        )}
+
+        {showProgress && variant !== 'progress' && (
+          <div className="mt-2">
+            <p className="text-xs text-surface-500">
+              {Math.round(state.currentProgress)}% complete
+            </p>
+          </div>
+        )}
+
+        {showCancel && onCancel && (
+          <button
+            onClick={onCancel}
+            className="mt-3 px-4 py-2 text-sm text-surface-600 hover:text-surface-900 hover:bg-surface-100 rounded-lg transition-colors"
+          >
+            Cancel
+          </button>
         )}
 
         {timeout && !state.hasTimedOut && (
@@ -242,7 +289,7 @@ export const ProductLoadingSpinner = () => (
     variant="skeleton" 
     message="Loading products..." 
     color="secondary"
-    size="medium"
+    position="center"
   />
 );
 
@@ -252,7 +299,7 @@ export const GroupLoadingSpinner = () => (
     message="Loading group details..." 
     color="primary"
     showProgress
-    size="medium"
+    position="center"
   />
 );
 
@@ -263,10 +310,11 @@ export const AuthLoadingSpinner = () => (
     color="primary"
     size="large"
     timeout={10000}
+    position="center"
   />
 );
 
-export const OverlayLoadingSpinner = () => (
+export const OverlayLoadingSpinner = ({ onCancel }: { onCancel?: () => void }) => (
   <LoadingSpinner 
     variant="spinner" 
     message="Processing..." 
@@ -274,5 +322,30 @@ export const OverlayLoadingSpinner = () => (
     position="fixed"
     color="primary"
     size="large"
+    showCancel={!!onCancel}
+    onCancel={onCancel}
+    zIndex={100}
+  />
+);
+
+export const UploadProgressSpinner = ({ progress }: { progress: number }) => (
+  <LoadingSpinner 
+    variant="progress" 
+    message="Uploading..." 
+    color="secondary"
+    showProgress
+    progress={progress}
+    position="center"
+  />
+);
+
+export const GroupJoinSpinner = () => (
+  <LoadingSpinner 
+    variant="dots" 
+    message="Joining group..." 
+    submessage="Calculating pricing and availability"
+    color="secondary"
+    size="medium"
+    timeout={5000}
   />
 );
