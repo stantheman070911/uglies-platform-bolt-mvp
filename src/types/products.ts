@@ -46,3 +46,17 @@ export interface ProductFilter {
   searchTerm?: string;
   sortBy?: ProductSortOption;
 }
+
+export interface CreateProductRequest {
+  name: string;
+  description: string;
+  price: number;
+  stockQuantity: number;
+  unit?: string;
+  images?: string[];
+  categoryId: string;
+  isOrganic?: boolean;
+  harvestDate?: string;
+  expiryDate?: string;
+  nutritionalInfo?: string;
+}

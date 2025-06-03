@@ -2,7 +2,6 @@ import { supabase, handleSupabaseError } from './supabase';
 import type { Product, CreateProductRequest } from '@/types/products';
 
 export class ProductService {
-  // Get products with farmer info
   static async getProducts(filters: {
     category?: string;
     region?: string;
@@ -40,7 +39,6 @@ export class ProductService {
     }
   }
 
-  // Get single product with details
   static async getProduct(productId: string) {
     try {
       const { data: product, error } = await supabase
@@ -65,7 +63,6 @@ export class ProductService {
     }
   }
 
-  // Create new product (farmers only)
   static async createProduct(request: CreateProductRequest, farmerId: string) {
     try {
       const { data: product, error } = await supabase
@@ -74,17 +71,15 @@ export class ProductService {
           farmer_id: farmerId,
           name: request.name,
           description: request.description,
-          category_id: request.categoryId,
           price: request.price,
           stock_quantity: request.stockQuantity,
           unit: request.unit || 'kg',
-          quality_grade: request.qualityGrade,
+          images: request.images || [],
+          category_id: request.categoryId,
+          is_organic: request.isOrganic || false,
           harvest_date: request.harvestDate,
           expiry_date: request.expiryDate,
-          organic_certified: request.organicCertified,
-          images: request.images || [],
-          location: request.location,
-          farming_methods: request.farmingMethods || []
+          nutritional_info: request.nutritionalInfo
         })
         .select()
         .single();
@@ -99,23 +94,34 @@ export class ProductService {
     }
   }
 
-  // Update product inventory after group buy
-  static async updateInventory(productId: string, quantitySold: number) {
+  static async updateProduct(productId: string, updates: Partial<CreateProductRequest>) {
     try {
       const { data: product, error } = await supabase
         .from('products')
-        .update({
-          stock_quantity: supabase.rpc('decrement_inventory', {
-            product_id: productId,
-            quantity: quantitySold
-          })
-        })
+        .update(updates)
         .eq('id', productId)
         .select()
         .single();
 
       if (error) throw error;
       return { success: true, data: product };
+    } catch (error) {
+      return { 
+        success: false, 
+        error: handleSupabaseError(error) 
+      };
+    }
+  }
+
+  static async deleteProduct(productId: string) {
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({ is_active: false })
+        .eq('id', productId);
+
+      if (error) throw error;
+      return { success: true };
     } catch (error) {
       return { 
         success: false, 
