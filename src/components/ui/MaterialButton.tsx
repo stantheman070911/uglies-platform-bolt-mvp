@@ -1,9 +1,9 @@
 import React, { forwardRef, ButtonHTMLAttributes } from 'react';
 import { 
   Loader2, ChevronRight, Plus, Check, X, Download, Upload, Edit, 
-  Trash2, Heart, Share2, Settings, Bell, Mail, Calendar, Search,
-  User, ShoppingCart, ArrowRight, ArrowLeft, ExternalLink, Link,
-  Save, Send, Filter, Home, Menu, Globe, Lock, Unlock, Star
+  Trash2, Heart, Share2, Bookmark, Search, Filter, Menu, User,
+  Home, Bell, Settings, ArrowRight, ArrowLeft, ExternalLink, Link,
+  Save, Send, Globe, Lock, Unlock, Star, ShoppingCart, Mail, Calendar
 } from 'lucide-react';
 
 interface MaterialButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'size'> {
@@ -12,8 +12,8 @@ interface MaterialButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElemen
   color?: 'primary' | 'secondary' | 'tertiary' | 'success' | 'warning' | 'error' | 'surface';
   icon?: 'none' | 'leading' | 'trailing' | 'only';
   iconType?: 'arrow' | 'plus' | 'check' | 'close' | 'download' | 'upload' | 'edit' | 'delete' | 
-    'heart' | 'share' | 'settings' | 'bell' | 'mail' | 'calendar' | 'search' | 'user' | 'cart' |
-    'link' | 'save' | 'send' | 'filter' | 'home' | 'menu' | 'globe' | 'lock' | 'star' | 'custom';
+    'heart' | 'share' | 'bookmark' | 'search' | 'filter' | 'menu' | 'user' | 'home' | 'bell' | 
+    'settings' | 'cart' | 'mail' | 'calendar' | 'custom';
   customIcon?: React.ReactNode;
   loading?: boolean;
   fullWidth?: boolean;
@@ -39,26 +39,17 @@ const iconComponents = {
   delete: Trash2,
   heart: Heart,
   share: Share2,
-  settings: Settings,
-  bell: Bell,
-  mail: Mail,
-  calendar: Calendar,
+  bookmark: Bookmark,
   search: Search,
-  user: User,
-  cart: ShoppingCart,
-  arrowRight: ArrowRight,
-  arrowLeft: ArrowLeft,
-  link: Link,
-  externalLink: ExternalLink,
-  save: Save,
-  send: Send,
   filter: Filter,
-  home: Home,
   menu: Menu,
-  globe: Globe,
-  lock: Lock,
-  unlock: Unlock,
-  star: Star
+  user: User,
+  home: Home,
+  bell: Bell,
+  settings: Settings,
+  cart: ShoppingCart,
+  mail: Mail,
+  calendar: Calendar
 };
 
 export const MaterialButton = forwardRef<HTMLButtonElement, MaterialButtonProps>(({
@@ -66,7 +57,7 @@ export const MaterialButton = forwardRef<HTMLButtonElement, MaterialButtonProps>
   size = 'medium',
   color = 'primary',
   icon = 'none',
-  iconType = 'arrow',
+  iconType,
   customIcon,
   loading = false,
   fullWidth = false,
@@ -183,7 +174,7 @@ export const MaterialButton = forwardRef<HTMLButtonElement, MaterialButtonProps>
 
   // Ripple effect
   const rippleClasses = ripple && !disabled && !loading 
-    ? 'relative overflow-hidden before:absolute before:inset-0 before:bg-white before:opacity-0 before:transition-opacity hover:before:opacity-10 active:before:opacity-20' 
+    ? 'relative overflow-hidden transition-all duration-200 before:absolute before:inset-0 before:bg-white before:opacity-0 hover:before:opacity-10 active:before:opacity-20' 
     : '';
 
   // Icon rendering
@@ -204,6 +195,16 @@ export const MaterialButton = forwardRef<HTMLButtonElement, MaterialButtonProps>
     return null;
   };
 
+  // Badge rendering
+  const renderBadge = () => {
+    if (!badge) return null;
+    return (
+      <span className="absolute -top-1 -right-1 bg-error-500 text-white text-xs rounded-full min-w-5 h-5 flex items-center justify-center px-1">
+        {badge}
+      </span>
+    );
+  };
+
   // Combined classes
   const combinedClasses = `
     inline-flex items-center justify-center
@@ -220,17 +221,6 @@ export const MaterialButton = forwardRef<HTMLButtonElement, MaterialButtonProps>
     ${className}
   `.trim().replace(/\s+/g, ' ');
 
-  // Badge rendering
-  const renderBadge = () => {
-    if (!badge) return null;
-
-    return (
-      <span className="absolute -top-1 -right-1 bg-error-500 text-white text-xs rounded-full min-w-5 h-5 flex items-center justify-center px-1">
-        {badge}
-      </span>
-    );
-  };
-
   // Render as link if href provided
   if (href) {
     return (
@@ -242,7 +232,7 @@ export const MaterialButton = forwardRef<HTMLButtonElement, MaterialButtonProps>
         title={tooltipText}
         data-testid={testId}
       >
-        <span className="relative">
+        <span className="relative flex items-center gap-2">
           {icon === 'leading' && renderIcon()}
           {icon === 'only' ? renderIcon() : children}
           {icon === 'trailing' && renderIcon()}
@@ -314,4 +304,21 @@ export const FloatingActionButton = (props: Omit<MaterialButtonProps, 'variant' 
     className="fixed bottom-6 right-6 z-50"
     {...props} 
   />
+);
+
+// UGLIES Platform Specific Variants
+export const JoinGroupButton = (props: Omit<MaterialButtonProps, 'iconType' | 'color'>) => (
+  <MaterialButton iconType="plus" color="secondary" {...props} />
+);
+
+export const ShareButton = (props: Omit<MaterialButtonProps, 'iconType' | 'variant'>) => (
+  <MaterialButton iconType="share" variant="outlined" {...props} />
+);
+
+export const FavoriteButton = (props: Omit<MaterialButtonProps, 'iconType' | 'variant'>) => (
+  <MaterialButton iconType="heart" variant="text" {...props} />
+);
+
+export const CreateGroupButton = (props: Omit<MaterialButtonProps, 'iconType' | 'color'>) => (
+  <MaterialButton iconType="plus" color="primary" icon="leading" {...props} />
 );
