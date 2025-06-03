@@ -42,11 +42,12 @@ export interface GroupParticipant {
   paymentStatus?: 'pending' | 'paid' | 'refunded';
 }
 
-export interface GroupMessage {
-  id: string;
-  groupId: string;
-  userId: string;
-  content: string;
-  createdAt: string;
-  isSystemMessage: boolean;
+export interface CreateGroupRequest {
+  productId: string;
+  initiatorId: string;
+  targetQuantity: number;
+  basePrice: number;
+  deadline: string;
+  deliveryMethod: string;
+  region: string;
 }
