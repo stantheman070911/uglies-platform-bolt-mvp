@@ -43,7 +43,7 @@ const SupabaseTest: React.FC = () => {
           <div className="animate-spin h-5 w-5 border-2 border-green-500 border-t-transparent rounded-full" />
         )}
         {status === 'success' && (
-          <CheckCircle2 className="text-green-600" size={20} />
+          <CheckCircle2 className="text-green-600\" size={20} />
         )}
         {status === 'error' && (
           <AlertCircle className="text-red-600" size={20} />
