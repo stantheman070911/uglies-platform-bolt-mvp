@@ -96,7 +96,7 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
 
   if (hasTimedOut) {
     return (
-      <div className="flex flex-col items-center justify-center p-4" data-testid={`${testId}-timeout`}>
+      <div className="flex flex-col items-center justify-center p-4\" data-testid={`${testId}-timeout`}>
         <AlertCircle className={`${sizeClasses[size]} text-warning-500 mb-2`} />
         <p className="text-surface-600 text-sm">Loading timeout</p>
         {submessage && (
