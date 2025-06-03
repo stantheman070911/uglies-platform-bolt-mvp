@@ -1,6 +1,6 @@
-import { supabase } from './supabase';
+import { supabase, handleSupabaseError } from './supabase';
 import type { LoginCredentials, RegisterData, User, UserRole } from '@/types/auth';
-import { ApiResponse } from '@/types/api';
+import type { ApiResponse } from '@/types/api';
 
 export async function signIn(
   credentials: LoginCredentials
@@ -225,3 +225,100 @@ export async function getCurrentUser(): Promise<ApiResponse<User>> {
     };
   }
 }
+
+// Get user profile with complete info
+export const getUserProfile = async (userId: string) => {
+  try {
+    const { data: profile, error } = await supabase
+      .from('users')
+      .select(`
+        *,
+        products:products(count),
+        groups:group_buys(count),
+        participations:group_participants(count)
+      `)
+      .eq('id', userId)
+      .single();
+
+    if (error) throw error;
+    return { success: true, data: profile };
+  } catch (error) {
+    return { 
+      success: false, 
+      error: handleSupabaseError(error) 
+    };
+  }
+};
+
+// Update user profile
+export const updateUserProfile = async (userId: string, updates: {
+  display_name?: string;
+  bio?: string;
+  avatar_url?: string;
+  phone_number?: string;
+  location?: any;
+  preferences?: any;
+}) => {
+  try {
+    const { data: profile, error } = await supabase
+      .from('users')
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', userId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return { success: true, data: profile };
+  } catch (error) {
+    return { 
+      success: false, 
+      error: handleSupabaseError(error) 
+    };
+  }
+};
+
+// Check if user can create groups (not blocked, verified, etc.)
+export const checkUserPermissions = async (userId: string) => {
+  try {
+    const { data: user, error } = await supabase
+      .from('users')
+      .select(`
+        role,
+        created_at,
+        is_verified,
+        is_active,
+        status
+      `)
+      .eq('id', userId)
+      .single();
+
+    if (error) throw error;
+
+    const canCreateGroups = user.is_active && user.status === 'active';
+    const canJoinGroups = user.is_active && user.status === 'active';
+    const canCreateProducts = user.role === 'farmer' && user.is_verified;
+    const canManageGroups = user.role === 'coordinator' || user.role === 'admin';
+
+    return {
+      success: true,
+      permissions: {
+        canCreateGroups,
+        canJoinGroups,
+        canCreateProducts,
+        canManageGroups,
+        role: user.role,
+        isVerified: user.is_verified,
+        isActive: user.is_active,
+        status: user.status
+      }
+    };
+  } catch (error) {
+    return { 
+      success: false, 
+      error: handleSupabaseError(error) 
+    };
+  }
+};
