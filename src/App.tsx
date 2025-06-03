@@ -3,7 +3,6 @@ import { Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from '@material-tailwind/react';
 import { AppLayout } from '@/components/layout';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import SupabaseTest from '@/components/SupabaseTest';
 import {
   HomePage,
   ProductsPage,
@@ -47,7 +46,6 @@ function App() {
             } />
           </Routes>
         </Suspense>
-        <SupabaseTest />
       </AppLayout>
     </ThemeProvider>
   );
