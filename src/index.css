@@ -1,3 +1,109 @@
+/* Import fonts FIRST - before any other CSS */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* Then Tailwind directives */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Custom CSS variables */
+:root {
+  /* Global Tech Colors (from UGLIES design system) */
+  --primary: #007AFF;           /* iOS trust blue */
+  --primary-light: #5CADFF;      
+  --primary-dark: #0056CC;
+  
+  --secondary: #34C759;         /* Universal growth green */
+  --secondary-light: #68D87A;
+  --secondary-dark: #248A3D;
+  
+  --tertiary: #FF9500;          /* Energy orange */
+  --tertiary-light: #FFB340;
+  --tertiary-dark: #CC7700;
+  
+  --surface: #F9FAFB;           /* Clean background */
+  --surface-variant: #E8F5E8;   /* Subtle green tint */
+  --outline: #79747E;           /* Material outline */
+  
+  --text-primary: #111827;      /* Primary text */
+  --text-secondary: #4B5563;    /* Secondary text */
+  --text-tertiary: #9CA3AF;     /* Tertiary text */
+}
+
+/* Global styles */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Roboto', 'Inter', system-ui, -apple-system, sans-serif;
+  line-height: 1.6;
+  color: var(--text-primary);
+  background-color: var(--surface);
+}
+
+/* Agricultural theme utilities */
+.agricultural-gradient {
+  background: linear-gradient(135deg, 
+    var(--primary) 0%, 
+    var(--secondary) 50%, 
+    var(--tertiary) 100%
+  );
+}
+
+.agricultural-accent {
+  border-left: 4px solid var(--secondary);
+  background: linear-gradient(90deg, 
+    var(--surface) 0%, 
+    var(--surface-variant) 100%
+  );
+}
+
+/* Material Design 3 elevation */
+.elevation-1 {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+}
+
+.elevation-2 {
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
+}
+
+.elevation-3 {
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23);
+}
+
+/* Smooth transitions */
+.transition-all {
+  transition: all 0.3s ease;
+}
+
+/* Focus styles for accessibility */
+.focus-ring:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Loading spinner animation */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Pulse animation for loading states */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
