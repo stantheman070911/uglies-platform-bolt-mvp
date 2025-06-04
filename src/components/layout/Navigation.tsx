@@ -22,8 +22,22 @@ export const Navigation: React.FC<NavigationProps> = ({
   const { user } = useAuth();
 
   const getNavigationItems = () => {
+    // Role-specific dashboard routes
+    const getDashboardItem = () => {
+      switch (user?.role) {
+        case 'farmer':
+          return { icon: BarChart3, label: 'Farm Dashboard', href: '/farmer-dashboard', badge: null };
+        case 'coordinator':
+          return { icon: BarChart3, label: 'Coordinator Dashboard', href: '/consumer-dashboard', badge: null };
+        default: // customer
+          return { icon: BarChart3, label: 'Dashboard', href: '/consumer-dashboard', badge: null };
+      }
+    };
+
+    const dashboardItem = getDashboardItem();
+
     const commonItems = [
-      { icon: Home, label: 'Dashboard', href: '/dashboard', badge: null },
+      dashboardItem,
       { icon: Package, label: 'Products', href: '/products', badge: null },
       { icon: Users, label: 'Group Buys', href: '/groups', badge: '3' }
     ];
@@ -158,6 +172,19 @@ export const Navigation: React.FC<NavigationProps> = ({
                 </MaterialButton>
               );
             })}
+          </div>
+
+          {/* Profile Section */}
+          <div className="p-4 border-t border-surface-100">
+            <MaterialButton
+              variant="text"
+              href="/profile"
+              fullWidth
+              className="justify-start text-surface-600 hover:text-surface-900"
+            >
+              <User className="w-5 h-5 mr-3" />
+              Profile
+            </MaterialButton>
           </div>
 
           {/* Agricultural Theme Section */}
