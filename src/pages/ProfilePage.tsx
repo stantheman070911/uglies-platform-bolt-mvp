@@ -1,4 +1,3 @@
-// Replace with complete enhanced ProfilePage:
 import React, { useState, useEffect } from 'react';
 import { MaterialButton } from '@/components/ui/MaterialButton';
 import { MaterialInput } from '@/components/ui/MaterialInput';
