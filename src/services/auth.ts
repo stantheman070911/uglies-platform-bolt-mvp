@@ -34,12 +34,18 @@ export async function signIn(
       role: profileData.role as UserRole,
       displayName: profileData.display_name,
       avatarUrl: profileData.avatar_url || undefined,
+      bio: profileData.bio,
+      region: profileData.region,
       createdAt: profileData.created_at,
       lastLogin: profileData.last_login || undefined,
       isVerified: profileData.is_verified,
       isActive: profileData.is_active,
       preferences: profileData.preferences || {},
-      metadata: profileData.metadata || undefined,
+      stats: {
+        products: profileData.products?.[0]?.count || 0,
+        groups: profileData.groups?.[0]?.count || 0,
+        participations: profileData.participations?.[0]?.count || 0
+      }
     };
 
     return {
@@ -100,12 +106,18 @@ export async function signUp(
       role: profileData.role as UserRole,
       displayName: profileData.display_name,
       avatarUrl: profileData.avatar_url || undefined,
+      bio: profileData.bio,
+      region: profileData.region,
       createdAt: profileData.created_at,
       lastLogin: profileData.last_login || undefined,
       isVerified: profileData.is_verified,
       isActive: profileData.is_active,
       preferences: profileData.preferences || {},
-      metadata: profileData.metadata || undefined,
+      stats: {
+        products: 0,
+        groups: 0,
+        participations: 0
+      }
     };
 
     return {
@@ -177,12 +189,18 @@ export async function getCurrentUser(): Promise<ApiResponse<User>> {
       role: profileData.role as UserRole,
       displayName: profileData.display_name,
       avatarUrl: profileData.avatar_url || undefined,
+      bio: profileData.bio,
+      region: profileData.region,
       createdAt: profileData.created_at,
       lastLogin: profileData.last_login || undefined,
       isVerified: profileData.is_verified,
       isActive: profileData.is_active,
       preferences: profileData.preferences || {},
-      metadata: profileData.metadata || undefined,
+      stats: {
+        products: profileData.products?.[0]?.count || 0,
+        groups: profileData.groups?.[0]?.count || 0,
+        participations: profileData.participations?.[0]?.count || 0
+      }
     };
 
     return {
