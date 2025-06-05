@@ -1,4 +1,3 @@
-```typescript
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { MaterialButton } from '@/components/ui/MaterialButton';
