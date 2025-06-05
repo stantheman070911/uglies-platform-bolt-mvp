@@ -61,11 +61,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             email: profile.email,
             role: profile.role as UserRole,
             displayName: profile.display_name,
-            avatarUrl: profile.avatar_url,
+            avatarUrl: profile.avatar_url || undefined,
             bio: profile.bio,
             region: profile.region,
             createdAt: profile.created_at,
-            lastLogin: profile.last_login,
+            lastLogin: profile.last_login || undefined,
             isVerified: profile.is_verified,
             isActive: profile.is_active,
             preferences: profile.preferences || {},
@@ -130,6 +130,78 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
+  const signIn = async (email: string, password: string) => {
+    try {
+      setError(null);
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (signInError) throw signInError;
+
+      // The onAuthStateChange listener will handle setting the user state.
+      return { success: true };
+    } catch (error) {
+      const message = handleSupabaseError(error);
+      setError(message);
+      return { success: false, error: { message } };
+    }
+  };
+
+  const signUp = async (data: RegisterData) => {
+    try {
+      setError(null);
+      
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          data: {
+            display_name: data.displayName,
+          }
+        }
+      });
+
+      if (authError) throw authError;
+
+      if (!authData.user) {
+        throw new Error('User creation failed');
+      }
+
+      const { error: profileError } = await supabase
+        .from('users')
+        .insert({
+          id: authData.user.id,
+          email: data.email,
+          role: data.role,
+          display_name: data.displayName,
+          region: data.region,
+          bio: data.bio || null,
+        });
+
+      if (profileError) throw profileError;
+      
+      // The onAuthStateChange listener will handle setting the user state.
+      return { success: true };
+    } catch (error) {
+      const message = handleSupabaseError(error);
+      setError(message);
+      return { success: false, error: { message } };
+    }
+  };
+
+  const signOut = async () => {
+    try {
+      setError(null);
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      setUser(null);
+    } catch (error) {
+      setError(handleSupabaseError(error));
+    }
+  };
+
   const updateProfile = async (updates: {
     displayName?: string;
     bio?: string;
@@ -182,9 +254,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isLoading,
     error,
     isAuthenticated: !!user,
-    signIn: async (email, password) => ({ success: false }),
-    signUp: async (data) => ({ success: false }),
-    signOut: async () => {},
+    // FIX: Pass the actual implemented functions, not mocks
+    signIn,
+    signUp,
+    signOut,
     updateProfile
   };
 
