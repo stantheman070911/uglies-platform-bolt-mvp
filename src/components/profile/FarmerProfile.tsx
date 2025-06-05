@@ -1,7 +1,7 @@
 import React from 'react';
 import { MaterialButton } from '../ui/MaterialButton';
 import { MaterialInput } from '../ui/MaterialInput';
-import { Leaf, Award, Star, Certificate } from 'lucide-react';
+import { Leaf, Award, Star, AlignCenterVertical as Certificate } from 'lucide-react';
 
 interface FarmerProfileProps {
   isEditing: boolean;
