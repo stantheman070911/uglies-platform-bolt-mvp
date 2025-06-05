@@ -5,8 +5,8 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ProductCard } from '@/components/ui/MaterialCard';
 import { GroupCard } from '@/components/ui/MaterialCard';
 import { StatsService } from '@/services/stats';
-import { ProductService } from '@/services/products';
-import { GroupBuyingService } from '@/services/groups';
+import { ProductService, ProductWithDetails } from '@/services/products';
+import { GroupBuyingService, FullGroupBuy } from '@/services/groups';
 import { 
   Sprout, Users, ShoppingBag, 
   Globe, ArrowRight, Star, Truck, Heart,
@@ -14,15 +14,21 @@ import {
   Home, Bell, Settings, Package
 } from 'lucide-react';
 
+interface PageStats {
+  totalFarmers: number;
+  totalGroups: number;
+  amountSaved: string;
+}
+
 const HomePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<PageStats>({
     totalFarmers: 0,
     totalGroups: 0,
     amountSaved: "$0"
   });
-  const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
-  const [activeGroups, setActiveGroups] = useState<any[]>([]);
+  const [featuredProducts, setFeaturedProducts] = useState<ProductWithDetails[]>([]);
+  const [activeGroups, setActiveGroups] = useState<FullGroupBuy[]>([]);
 
   useEffect(() => {
     loadPageData();
@@ -50,17 +56,17 @@ const HomePage: React.FC = () => {
       ]);
 
       setStats({
-        totalFarmers: farmersResult.data || 0,
-        totalGroups: groupsResult.data || 0,
-        amountSaved: savingsResult.data || "$0"
+        totalFarmers: farmersResult.count,
+        totalGroups: groupsResult.count,
+        amountSaved: savingsResult.amount
       });
 
-      if (productsResult.success) {
-        setFeaturedProducts(productsResult.data || []);
+      if (productsResult.success && productsResult.data) {
+        setFeaturedProducts(productsResult.data);
       }
 
-      if (groupsDataResult.success) {
-        setActiveGroups(groupsDataResult.data || []);
+      if (groupsDataResult.success && groupsDataResult.data) {
+        setActiveGroups(groupsDataResult.data);
       }
     } catch (error) {
       console.error('Error loading homepage data:', error);
@@ -72,8 +78,8 @@ const HomePage: React.FC = () => {
   const loadActiveGroups = async () => {
     try {
       const result = await GroupBuyingService.getActiveGroups(undefined, 3);
-      if (result.success) {
-        setActiveGroups(result.data || []);
+      if (result.success && result.data) {
+        setActiveGroups(result.data);
       }
     } catch (error) {
       console.error('Error loading active groups:', error);
