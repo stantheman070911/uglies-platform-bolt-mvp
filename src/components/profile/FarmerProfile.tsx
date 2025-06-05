@@ -5,7 +5,7 @@ import { LoadingSpinner } from '../ui/LoadingSpinner';
 import { useAuth } from '@/hooks/useAuth';
 import {
   Camera, Image, Plus, Leaf,
-  Award, Star, Certificate
+  Award, Star, ShieldCheck
 } from 'lucide-react';
 
 interface FarmerProfileProps {
@@ -103,7 +103,7 @@ export const FarmerProfile: React.FC<FarmerProfileProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white rounded-xl shadow-sm border border-surface-200 p-6">
           <div className="flex items-center gap-2 mb-4">
-            <Certificate className="w-5 h-5 text-blue-600" />
+            <ShieldCheck className="w-5 h-5 text-blue-600" />
             <h3 className="text-lg font-semibold text-surface-900">Certifications</h3>
           </div>
           <div className="space-y-2">
