@@ -39,4 +39,6 @@ export interface LoginCredentials {
 export interface RegisterData extends LoginCredentials {
   displayName: string;
   role: UserRole;
+  region?: string;
+  bio?: string;
 }

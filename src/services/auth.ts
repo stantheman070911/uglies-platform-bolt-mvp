@@ -88,6 +88,8 @@ export async function signUp(
           email: registerData.email,
           role: registerData.role,
           display_name: registerData.displayName,
+          region: registerData.region,
+          bio: registerData.bio || null,
           is_verified: false,
           is_active: true,
           preferences: {},
@@ -222,8 +224,7 @@ export const updateUserProfile = async (userId: string, updates: {
   display_name?: string;
   bio?: string;
   avatar_url?: string;
-  phone_number?: string;
-  location?: any;
+  region?: string;
   preferences?: Record<string, any>;
 }) => {
   try {
