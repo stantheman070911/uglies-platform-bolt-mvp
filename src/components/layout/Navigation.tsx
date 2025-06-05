@@ -27,7 +27,6 @@ export const Navigation: React.FC<NavigationProps> = ({
       switch (user?.role) {
         case 'farmer':
           return { icon: BarChart3, label: 'Farm Dashboard', href: '/farmer-dashboard' };
-        // FIX: Coordinator dashboard link corrected
         case 'coordinator':
           return { icon: BarChart3, label: 'Coordinator Dashboard', href: '/coordinator-dashboard' }; 
         default: // customer
@@ -132,7 +131,7 @@ export const Navigation: React.FC<NavigationProps> = ({
             >
               <Settings className="w-5 h-5 mr-3 text-surface-500" />
               Settings
-            </Materi>
+            </MaterialButton> 
         </div>
       </nav>
     </>
