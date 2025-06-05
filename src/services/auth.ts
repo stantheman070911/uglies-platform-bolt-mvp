@@ -38,6 +38,7 @@ export async function signIn(
       lastLogin: profileData.last_login || undefined,
       isVerified: profileData.is_verified,
       isActive: profileData.is_active,
+      preferences: profileData.preferences || {},
       metadata: profileData.metadata || undefined,
     };
 
@@ -83,6 +84,7 @@ export async function signUp(
           display_name: registerData.displayName,
           is_verified: false,
           is_active: true,
+          preferences: {},
           created_at: new Date().toISOString(),
         },
       ])
@@ -102,6 +104,7 @@ export async function signUp(
       lastLogin: profileData.last_login || undefined,
       isVerified: profileData.is_verified,
       isActive: profileData.is_active,
+      preferences: profileData.preferences || {},
       metadata: profileData.metadata || undefined,
     };
 
@@ -178,6 +181,7 @@ export async function getCurrentUser(): Promise<ApiResponse<User>> {
       lastLogin: profileData.last_login || undefined,
       isVerified: profileData.is_verified,
       isActive: profileData.is_active,
+      preferences: profileData.preferences || {},
       metadata: profileData.metadata || undefined,
     };
 
@@ -196,44 +200,33 @@ export async function getCurrentUser(): Promise<ApiResponse<User>> {
   }
 }
 
-// Get user profile with complete info
-export const getUserProfile = async (userId: string) => {
-  try {
-    const { data: profile, error } = await supabase
-      .from('users')
-      .select(`
-        *,
-        products:products(count),
-        groups:group_buys(count),
-        participations:group_participants(count)
-      `)
-      .eq('id', userId)
-      .single();
-
-    if (error) throw error;
-    return { success: true, data: profile };
-  } catch (error) {
-    return { 
-      success: false, 
-      error: handleSupabaseError(error) 
-    };
-  }
-};
-
-// Update user profile
 export const updateUserProfile = async (userId: string, updates: {
   display_name?: string;
   bio?: string;
   avatar_url?: string;
   phone_number?: string;
   location?: any;
-  preferences?: any;
+  preferences?: Record<string, any>;
 }) => {
   try {
+    // First, fetch current preferences
+    const { data: user, error: fetchError } = await supabase
+      .from('users')
+      .select('preferences')
+      .eq('id', userId)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    // Merge new preferences with existing ones
+    const newPreferences = { ...(user?.preferences || {}), ...updates.preferences };
+
+    // Update user profile with merged preferences
     const { data: profile, error } = await supabase
       .from('users')
       .update({
         ...updates,
+        preferences: newPreferences,
         updated_at: new Date().toISOString()
       })
       .eq('id', userId)
@@ -242,49 +235,6 @@ export const updateUserProfile = async (userId: string, updates: {
 
     if (error) throw error;
     return { success: true, data: profile };
-  } catch (error) {
-    return { 
-      success: false, 
-      error: handleSupabaseError(error) 
-    };
-  }
-};
-
-// Check if user can create groups (not blocked, verified, etc.)
-export const checkUserPermissions = async (userId: string) => {
-  try {
-    const { data: user, error } = await supabase
-      .from('users')
-      .select(`
-        role,
-        created_at,
-        is_verified,
-        is_active,
-        status
-      `)
-      .eq('id', userId)
-      .single();
-
-    if (error) throw error;
-
-    const canCreateGroups = user.is_active && user.status === 'active';
-    const canJoinGroups = user.is_active && user.status === 'active';
-    const canCreateProducts = user.role === 'farmer' && user.is_verified;
-    const canManageGroups = user.role === 'coordinator' || user.role === 'admin';
-
-    return {
-      success: true,
-      permissions: {
-        canCreateGroups,
-        canJoinGroups,
-        canCreateProducts,
-        canManageGroups,
-        role: user.role,
-        isVerified: user.is_verified,
-        isActive: user.is_active,
-        status: user.status
-      }
-    };
   } catch (error) {
     return { 
       success: false, 
