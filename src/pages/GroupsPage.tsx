@@ -20,7 +20,7 @@ interface GroupFilters {
 }
 
 const GroupsPage: React.FC = () => {
-  const { userProfile } = useAuth();
+  const { user } = useAuth();
   const [groups, setGroups] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [joinModalOpen, setJoinModalOpen] = useState(false);
@@ -28,7 +28,7 @@ const GroupsPage: React.FC = () => {
   const [selectedGroup, setSelectedGroup] = useState<any>(null);
   const [filters, setFilters] = useState<GroupFilters>({
     status: '',
-    region: userProfile?.region || '',
+    region: user?.region || '',
     category: '',
     timeLeft: '',
     searchQuery: ''
@@ -64,13 +64,13 @@ const GroupsPage: React.FC = () => {
   }, [filters]);
 
   useEffect(() => {
-    // Set up real-time subscriptions for group updates
-    const subscription = GroupBuyingService.subscribeToGroup('all', () => {
+    // Set up real-time subscriptions for group updates using the new method
+    const subscription = GroupBuyingService.subscribeToAllGroupChanges(() => {
       loadGroups();
     });
 
     return () => {
-      subscription?.unsubscribe();
+      subscription.unsubscribe();
     };
   }, []);
 
@@ -139,12 +139,12 @@ const GroupsPage: React.FC = () => {
   };
 
   const handleGroupJoin = async (quantity: number) => {
-    if (!selectedGroup || !userProfile?.id) return;
+    if (!selectedGroup || !user?.id) return;
 
     try {
       const result = await GroupBuyingService.joinGroup(
         selectedGroup.id,
-        userProfile.id,
+        user.id,
         quantity
       );
 
