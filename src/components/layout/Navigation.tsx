@@ -1,12 +1,11 @@
-```typescript
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { MaterialButton } from '../ui/MaterialButton';
 import { useAuth } from '@/hooks/useAuth';
 import { 
   Home, Package, Users, User, BarChart3, Settings,
   Sprout, ShoppingCart, HandHeart, Plus, Search,
-  MapPin, Bell, Star
+  MapPin, Bell, Star, ShieldCheck
 } from 'lucide-react';
 
 interface NavigationProps {
@@ -21,17 +20,18 @@ export const Navigation: React.FC<NavigationProps> = ({
   className = ''
 }) => {
   const { user } = useAuth();
+  const location = useLocation();
 
   const getNavigationItems = () => {
-    // Role-specific dashboard routes
     const getDashboardItem = () => {
       switch (user?.role) {
         case 'farmer':
-          return { icon: BarChart3, label: 'Farm Dashboard', href: '/farmer-dashboard', badge: null };
+          return { icon: BarChart3, label: 'Farm Dashboard', href: '/farmer-dashboard' };
+        // FIX: Coordinator dashboard link corrected
         case 'coordinator':
-          return { icon: BarChart3, label: 'Coordinator Dashboard', href: '/consumer-dashboard', badge: null };
+          return { icon: BarChart3, label: 'Coordinator Dashboard', href: '/coordinator-dashboard' }; 
         default: // customer
-          return { icon: BarChart3, label: 'Dashboard', href: '/consumer-dashboard', badge: null };
+          return { icon: BarChart3, label: 'Dashboard', href: '/consumer-dashboard' };
       }
     };
 
@@ -39,7 +39,7 @@ export const Navigation: React.FC<NavigationProps> = ({
 
     const commonItems = [
       dashboardItem,
-      { icon: Package, label: 'Products', href: '/products', badge: null },
+      { icon: Package, label: 'Products', href: '/products' },
       { icon: Users, label: 'Group Buys', href: '/groups', badge: '3' }
     ];
 
@@ -47,50 +47,25 @@ export const Navigation: React.FC<NavigationProps> = ({
       case 'farmer':
         return [
           ...commonItems,
-          { icon: Sprout, label: 'My Farm', href: '/farm', badge: null },
-          { icon: BarChart3, label: 'Analytics', href: '/analytics', badge: null },
-          { icon: Plus, label: 'Add Product', href: '/products/create', badge: null }
+          { icon: ShieldCheck, label: 'My Products', href: '/my-products' },
+          { icon: Plus, label: 'Add Product', href: '/products/create' },
         ];
-
       case 'coordinator':
         return [
           ...commonItems,
           { icon: HandHeart, label: 'Coordination', href: '/coordination', badge: '2' },
-          { icon: MapPin, label: 'Regional Hub', href: '/regional', badge: null },
-          { icon: Plus, label: 'Create Group', href: '/groups/create', badge: null }
+          { icon: Plus, label: 'Create Group', href: '/groups/create' },
         ];
-
       default: // customer
         return [
           ...commonItems,
-          { icon: ShoppingCart, label: 'My Orders', href: '/orders', badge: null },
-          { icon: Star, label: 'Favorites', href: '/favorites', badge: null },
-          { icon: Search, label: 'Discover', href: '/discover', badge: null }
+          { icon: ShoppingCart, label: 'My Orders', href: '/orders' },
+          { icon: Star, label: 'Favorites', href: '/favorites' },
         ];
     }
   };
 
   const navigationItems = getNavigationItems();
-
-  const quickStats = {
-    farmer: [
-      { label: 'Active Products', value: '12', color: 'text-secondary-600' },
-      { label: 'Total Groups', value: '8', color: 'text-primary-600' },
-      { label: 'This Month Sales', value: '$2,340', color: 'text-tertiary-600' }
-    ],
-    customer: [
-      { label: 'Groups Joined', value: '5', color: 'text-secondary-600' },
-      { label: 'Money Saved', value: '$127', color: 'text-primary-600' },
-      { label: 'Local Farmers', value: '12', color: 'text-tertiary-600' }
-    ],
-    coordinator: [
-      { label: 'Active Coordination', value: '4', color: 'text-secondary-600' },
-      { label: 'Community Size', value: '89', color: 'text-primary-600' },
-      { label: 'Groups Facilitated', value: '23', color: 'text-tertiary-600' }
-    ]
-  };
-
-  const currentStats = quickStats[user?.role as keyof typeof quickStats] || quickStats.customer;
 
   return (
     <>
@@ -108,111 +83,56 @@ export const Navigation: React.FC<NavigationProps> = ({
         transform ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0
         transition-transform duration-300 ease-in-out
         w-64 bg-white border-r border-surface-200 shadow-lg lg:shadow-none
+        flex flex-col
         ${className}
       `}>
-        <div className="flex flex-col h-full">
-          
-          {/* User Profile Section */}
-          <div className="p-4 border-b border-surface-100 bg-gradient-to-r from-primary-50 to-secondary-50">
-            <div className="flex items-center space-x-3">
-              <img
-                src={user?.avatarUrl || \`https://ui-avatars.com/api/?name=${user?.displayName}&background=007AFF&color=fff`}
-                alt={user?.displayName || 'User'}
-                className="w-12 h-12 rounded-full border-2 border-white shadow-sm"
-              />
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-surface-900 truncate">
-                  {user?.displayName || 'User'}
-                </p>
-                <p className="text-sm text-surface-600 capitalize">
-                  {user?.role}
-                </p>
-                <div className="flex items-center mt-1">
-                  <MapPin className="w-3 h-3 text-surface-400 mr-1" />
-                  <span className="text-xs text-surface-500 capitalize">
-                    {user?.region?.replace('_', ' ')}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Stats */}
-          <div className="p-4 border-b border-surface-100">
-            <h3 className="text-xs font-semibold text-surface-500 uppercase tracking-wide mb-3">
-              Quick Stats
-            </h3>
-            <div className="space-y-3">
-              {currentStats.map((stat, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <span className="text-sm text-surface-600">{stat.label}</span>
-                  <span className={\`font-semibold ${stat.color}`}>{stat.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Navigation Items */}
-          <div className="flex-1 p-4 space-y-1 overflow-y-auto">
-            <h3 className="text-xs font-semibold text-surface-500 uppercase tracking-wide mb-3">
-              Navigation
-            </h3>
-            {navigationItems.map((item, index) => {
-              const IconComponent = item.icon;
-              return (
-                <MaterialButton
-                  key={index}
-                  variant="text"
-                  href={item.href}
-                  fullWidth
-                  className="justify-start text-surface-700 hover:text-surface-900 hover:bg-surface-100"
-                  badge={item.badge || undefined}
-                >
-                  <IconComponent className="w-5 h-5 mr-3" />
-                  {item.label}
-                </MaterialButton>
-              );
-            })}
-          </div>
-
-          {/* Profile Section */}
-          <div className="p-4 border-t border-surface-100">
-            <MaterialButton
+        <div className="p-4 border-b border-surface-200">
+           <Link to="/" className="flex items-center gap-2">
+            <Sprout className="w-8 h-8 text-green-600" />
+            <span className="text-xl font-bold text-gray-800">UGLIES</span>
+          </Link>
+        </div>
+        
+        <div className="flex-1 p-2 space-y-1 overflow-y-auto">
+          {navigationItems.map((item, index) => {
+            const IconComponent = item.icon;
+            const isActive = location.pathname === item.href;
+            return (
+              <MaterialButton
+                key={index}
+                variant={isActive ? 'filled' : 'text'}
+                color={isActive ? 'primary' : 'default'}
+                href={item.href}
+                fullWidth
+                className="justify-start text-surface-700"
+                badge={item.badge || undefined}
+              >
+                <IconComponent className={`w-5 h-5 mr-3 ${isActive ? '' : 'text-surface-500'}`} />
+                {item.label}
+              </MaterialButton>
+            );
+          })}
+        </div>
+        
+        <div className="p-2 border-t border-surface-200">
+           <MaterialButton
               variant="text"
               href="/profile"
               fullWidth
-              className="justify-start text-surface-600 hover:text-surface-900"
+              className="justify-start text-surface-700"
             >
-              <User className="w-5 h-5 mr-3" />
+              <User className="w-5 h-5 mr-3 text-surface-500" />
               Profile
             </MaterialButton>
-          </div>
-
-          {/* Agricultural Theme Section */}
-          <div className="p-4 border-t border-surface-100 bg-gradient-to-r from-secondary-50 to-primary-50">
-            <div className="text-center">
-              <div className="flex items-center justify-center space-x-1 mb-2">
-                <Sprout className="w-4 h-4 text-secondary-600" />
-                <span className="text-sm font-medium text-surface-700">Supporting Local Agriculture</span>
-              </div>
-              <p className="text-xs text-surface-500">
-                Building sustainable farming communities worldwide
-              </p>
-            </div>
-          </div>
-
-          {/* Settings */}
-          <div className="p-4 border-t border-surface-100">
             <MaterialButton
               variant="text"
               href="/settings"
               fullWidth
-              className="justify-start text-surface-600 hover:text-surface-900"
+              className="justify-start text-surface-700"
             >
-              <Settings className="w-5 h-5 mr-3" />
+              <Settings className="w-5 h-5 mr-3 text-surface-500" />
               Settings
-            </MaterialButton>
-          </div>
+            </Materi>
         </div>
       </nav>
     </>
@@ -220,4 +140,3 @@ export const Navigation: React.FC<NavigationProps> = ({
 };
 
 export default Navigation;
-```
