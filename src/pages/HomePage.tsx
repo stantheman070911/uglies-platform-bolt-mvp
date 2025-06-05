@@ -155,19 +155,35 @@ const HomePage: React.FC = () => {
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {activeGroups.map((group) => (
-              <GroupCard
-                key={group.id}
-                group={group}
-                onJoin={() => {}}
-                onViewDetails={() => {}}
-              />
-            ))}
+            {activeGroups.length === 0 ? (
+              <div className="col-span-3 text-center py-12">
+                <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Active Groups</h3>
+                <p className="text-gray-600 mb-6">Be the first to start a group buy!</p>
+                <MaterialButton
+                  href="/groups/create"
+                  iconType="plus"
+                  icon="leading"
+                  color="secondary"
+                >
+                  Start a Group Buy
+                </MaterialButton>
+              </div>
+            ) : (
+              activeGroups.map((group) => (
+                <GroupCard
+                  key={group.id}
+                  group={group}
+                  onJoin={() => {}}
+                  onViewDetails={() => {}}
+                />
+              ))
+            )}
           </div>
         </div>
       </section>
 
-      {/* Featured Farmers */}
+      {/* Featured Products */}
       <section className="py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
@@ -178,13 +194,21 @@ const HomePage: React.FC = () => {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuredProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onViewDetails={() => {}}
-              />
-            ))}
+            {featuredProducts.length === 0 ? (
+              <div className="col-span-3 text-center py-12">
+                <Sprout className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Featured Products</h3>
+                <p className="text-gray-600">Check back soon for fresh produce!</p>
+              </div>
+            ) : (
+              featuredProducts.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onViewDetails={() => {}}
+                />
+              ))
+            )}
           </div>
         </div>
       </section>
