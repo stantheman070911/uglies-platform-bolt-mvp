@@ -1,4 +1,3 @@
-```typescript
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { MaterialButton } from '../ui/MaterialButton';
@@ -69,7 +68,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   };
 
   return (
-    <header className={`bg-white border-b border-surface-200 shadow-sm ${className}`}>
+    <header className={\`bg-white border-b border-surface-200 shadow-sm ${className}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           
@@ -169,12 +168,12 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                     {notifications.map((notification) => (
                       <div
                         key={notification.id}
-                        className={`p-3 border-b border-surface-50 hover:bg-surface-50 ${
+                        className={\`p-3 border-b border-surface-50 hover:bg-surface-50 ${
                           notification.unread ? 'bg-primary-50' : ''
                         }`}
                       >
                         <div className="flex items-start space-x-3">
-                          <div className={`w-2 h-2 rounded-full mt-2 ${
+                          <div className={\`w-2 h-2 rounded-full mt-2 ${
                             notification.unread ? 'bg-primary-500' : 'bg-surface-300'
                           }`} />
                           <div className="flex-1">
@@ -206,7 +205,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 className="flex items-center space-x-2 p-1 rounded-lg hover:bg-surface-100 transition-colors"
               >
                 <img
-                  src={user?.avatarUrl || `https://ui-avatars.com/api/?name=${user?.displayName}&background=007AFF&color=fff`}
+                  src={user?.avatarUrl || \`https://ui-avatars.com/api/?name=${user?.displayName}&background=007AFF&color=fff`}
                   alt={user?.displayName || 'User'}
                   className="w-8 h-8 rounded-full border-2 border-primary-100"
                 />
@@ -283,4 +282,3 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 };
 
 export default AppHeader;
-```
