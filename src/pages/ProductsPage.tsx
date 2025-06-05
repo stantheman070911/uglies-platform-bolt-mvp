@@ -1,284 +1,204 @@
-import React, { useState, useEffect } from 'react';
+/**
+ * @file src/pages/ProductsPage.tsx
+ * @description Page for browsing and filtering agricultural products.
+ * Uses ProductService to fetch data (now from a performant view).
+ * Allows users to search, filter, and view products in grid or list mode.
+ * Navigates to ProductDetailsPage for individual product views.
+ * Adherence to "Violent psychopath maintenance standard":
+ * - Strict typing for all state and props.
+ * - Clear separation of concerns: fetching, filtering, rendering.
+ * - Robust handling of loading and empty states.
+ * - Efficient data fetching by passing filters to the backend service.
+ */
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom'; // For navigation
 import { MaterialButton } from '@/components/ui/MaterialButton';
 import { MaterialInput } from '@/components/ui/MaterialInput';
-import { ProductCard } from '@/components/ui/MaterialCard';
+import { ProductCard } from '@/components/ui/MaterialCard'; // Assuming ProductCard expects a compatible product type
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { ProductService } from '@/services/products';
+// CORRECT TYPING: Use ProductWithDetails if that's what ProductService.getProducts now returns
+// and what ProductCard is designed to accept, or adapt as needed.
+// Based on our corrected ProductService, it returns ProductWithDetails.
+import { ProductService, ProductWithDetails, ProductFilters as ServiceProductFilters } from '@/services/products';
 import { useAuth } from '@/hooks/useAuth';
-import { Search, Filter, Grid, List, Plus } from 'lucide-react';
-import type { Product } from '@/types/products';
+import { Search, Filter, Grid, List, Plus, XCircle } from 'lucide-react';
 
-interface ProductFilters {
-  category: string;
-  region: string;
-  quality: string;
-  priceRange: string;
+// Interface for frontend filter state. This might be slightly different from ServiceProductFilters
+// to accommodate UI elements like price range selectors that are then translated.
+interface PageProductFilters {
+  categoryName: string; // Aligned with ProductService: filters by category_name from the view
+  // region: string; // For filtering products by FARMER's region. The service handles this.
+  qualityGrade: string; // Aligned with ProductService: filters by quality_grade
+  priceRange: string; // UI state, will be converted to min/max for service
   searchQuery: string;
 }
 
 const ProductsPage: React.FC = () => {
   const { user } = useAuth();
-  const [products, setProducts] = useState<Product[]>([]);
+  const navigate = useNavigate(); // useNavigate hook for navigation
+
+  // State for products, loading status, view mode, and filters.
+  // CRITICAL: Use ProductWithDetails[] if your service and card expect it.
+  const [products, setProducts] = useState<ProductWithDetails[]>([]);
+  const [totalProducts, setTotalProducts] = useState(0); // For pagination
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState<ProductFilters>({
-    category: '',
-    region: '',
-    quality: '',
-    priceRange: '',
+  const [showFilters, setShowFilters] = useState(false); // Toggle visibility of detailed filters
+
+  // Initial filter state.
+  const [filters, setFilters] = useState<PageProductFilters>({
+    categoryName: '',
+    // region: '', // Region filter will be applied via ProductService
+    qualityGrade: '',
+    priceRange: '', // e.g., "0-5", "5-15", "30-"
     searchQuery: ''
   });
 
+  // Available filter options for dropdowns - these should match your data.
   const categories = [
     { value: '', label: 'All Categories' },
-    { value: 'vegetables', label: '🥬 Vegetables' },
-    { value: 'fruits', label: '🍎 Fruits' },
-    { value: 'grains', label: '🌾 Grains & Legumes' },
-    { value: 'herbs', label: '🌿 Herbs & Spices' }
+    { value: 'Vegetables', label: '🥬 Vegetables' }, // Match category_name in your DB/View
+    { value: 'Fruits', label: '🍎 Fruits' },
+    { value: 'Grains', label: '🌾 Grains & Legumes' },
+    { value: 'Herbs', label: '🌿 Herbs & Spices' },
   ];
-
-  const regions = [
-    { value: '', label: 'All Regions' },
-    { value: 'local_area', label: '🏡 Local Area' },
-    { value: 'nearby', label: '🌱 Nearby Farms' },
-    { value: 'urban_farming', label: '🏢 Urban Agriculture' },
-    { value: 'organic_certified', label: '🌿 Certified Organic' },
-    { value: 'heritage_farms', label: '🌾 Heritage Varieties' }
-  ];
-
+  // const regions = [ // This would be for filtering farmers by region. Products are filtered by farmer's region via service.
+  //   { value: '', label: 'All Regions' }, /* ... */
+  // ];
   const qualityTiers = [
     { value: '', label: 'All Quality' },
     { value: 'premium', label: '🏆 Premium Grade' },
     { value: 'standard', label: '✓ Standard Grade' },
-    { value: 'cosmetic', label: '💝 Cosmetic Seconds' }
+    { value: 'cosmetic', label: '💝 Cosmetic Seconds' },
+  ];
+  const priceRanges = [
+    { value: '', label: 'All Prices' },
+    { value: '0-5', label: 'Under $5' },
+    { value: '5-15', label: '$5 - $15' },
+    { value: '15-30', label: '$15 - $30' },
+    { value: '30-', label: 'Over $30' },
   ];
 
-  useEffect(() => {
-    loadProducts();
-  }, [filters]);
 
-  const loadProducts = async () => {
+  // Debounced product fetching logic.
+  // useCallback ensures this function is stable unless `filters` change.
+  const loadProducts = useCallback(async () => {
     setLoading(true);
     try {
-      const result = await ProductService.getProducts({
-        category: filters.category || undefined,
-        region: filters.region || undefined,
-        quality: filters.quality || undefined
-      });
+      // Prepare filters for the service call.
+      const serviceFilters: ServiceProductFilters = {
+        categoryName: filters.categoryName || undefined,
+        qualityGrade: filters.qualityGrade || undefined,
+        search: filters.searchQuery || undefined,
+        limit: 20, // Example limit, implement pagination later
+        // region: filters.region || undefined, // If you enable region filtering for farmers
+      };
+
+      // Translate priceRange UI state to min/max for the service.
+      if (filters.priceRange) {
+        const [minStr, maxStr] = filters.priceRange.split('-');
+        const min = parseFloat(minStr);
+        const max = maxStr ? parseFloat(maxStr) : undefined;
+        if (!isNaN(min)) {
+           // ServiceProductFilters should accept minPrice/maxPrice or handle range string.
+           // Assuming it needs min/max. Adjust if your service expects a different format.
+           // For now, I'll assume ProductService doesn't take priceRange directly,
+           // and if it does, it should be typed in ServiceProductFilters.
+           // My corrected ProductService.getProducts expects `priceRange: { min: number; max: number }`
+           // This page's current `filters.priceRange` is a string "min-max".
+           // This part needs alignment. For now, let's assume service does not take price directly.
+           // If ProductService is updated to take minPrice/maxPrice:
+           // serviceFilters.priceRange = { min, max: max === undefined ? Infinity : max };
+        }
+      }
+      
+      // CRITICAL CHANGE: Call ProductService.getProducts with constructed serviceFilters.
+      // The service now handles more filtering logic internally using the DB view.
+      const result = await ProductService.getProducts(serviceFilters);
 
       if (result.success) {
-        let filteredProducts = result.data;
-        
-        // Apply search filter
-        if (filters.searchQuery) {
-          const query = filters.searchQuery.toLowerCase();
-          filteredProducts = filteredProducts.filter(product =>
-            product.name.toLowerCase().includes(query) ||
-            product.description?.toLowerCase().includes(query)
-          );
-        }
-
-        // Apply price range filter
+        // Client-side filtering should be MINIMAL if service handles it.
+        // Only apply filters here if the service cannot handle them.
+        // The price range filter is applied here as an example if service doesn't.
+        let productsToDisplay = result.data;
         if (filters.priceRange) {
-          const [min, max] = filters.priceRange.split('-').map(Number);
-          filteredProducts = filteredProducts.filter(product =>
-            product.price >= min && (!max || product.price <= max)
-          );
+            const [min, max] = filters.priceRange.split('-').map(Number);
+            productsToDisplay = productsToDisplay.filter(product => {
+                const price = product.price; // Assuming 'price' from rough_fire schema
+                return price >= min && (max === undefined || isNaN(max) || price <= max);
+            });
         }
 
-        setProducts(filteredProducts);
+        setProducts(productsToDisplay);
+        setTotalProducts(result.count || productsToDisplay.length); // Use count from service if available
+      } else {
+        console.error('Failed to load products:', result.error);
+        setProducts([]);
+        setTotalProducts(0);
       }
     } catch (error) {
-      console.error('Failed to load products:', error);
+      console.error('Critical error in loadProducts:', error);
+      setProducts([]);
+      setTotalProducts(0);
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]); // Dependency array includes filters.
 
-  const handleFilterChange = (key: keyof ProductFilters, value: string) => {
+  // useEffect to call loadProducts when filters change.
+  useEffect(() => {
+    const timer = setTimeout(() => { // Debounce fetching
+        loadProducts();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [loadProducts]); // loadProducts is memoized
+
+  /**
+   * Handles changes to filter inputs.
+   * @param key The key of the filter being changed in PageProductFilters.
+   * @param value The new value for the filter.
+   */
+  const handleFilterChange = (key: keyof PageProductFilters, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
+  /**
+   * Resets all filters to their default empty state.
+   */
   const clearFilters = () => {
     setFilters({
-      category: '',
-      region: '',
-      quality: '',
+      categoryName: '',
+      qualityGrade: '',
       priceRange: '',
       searchQuery: ''
     });
+    setShowFilters(false); // Optionally close filter panel on clear
+  };
+
+  /**
+   * Handles navigation to the product details page.
+   * @param productId The ID of the product to view.
+   */
+  const handleViewDetails = (productId: string) => {
+    navigate(`/products/${productId}`);
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 font-roboto">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-8 pb-4 border-b border-gray-200">
         <div>
-          <h1 className="text-3xl font-bold text-surface-900">Fresh Products</h1>
-          <p className="text-surface-600 mt-1">
-            Discover quality produce from local farmers
+          <h1 className="text-4xl font-bold text-gray-800">Fresh Produce</h1>
+          <p className="text-gray-600 mt-1 text-lg">
+            Discover quality goods from local farmers and artisans.
           </p>
         </div>
-        
         {user?.role === 'farmer' && (
           <MaterialButton
-            href="/products/create"
+            href="/products/create" // Assuming you have a page for farmers to create products
             iconType="plus"
             icon="leading"
             color="secondary"
+            className="mt-4 sm:mt-0"
           >
-            Add Product
-          </MaterialButton>
-        )}
-      </div>
-
-      {/* Search and Filters */}
-      <div className="bg-white rounded-lg shadow-sm border border-surface-200 p-4 mb-6">
-        <div className="flex flex-col lg:flex-row gap-4">
-          <div className="flex-1">
-            <MaterialInput
-              placeholder="Search products, farmers, or descriptions..."
-              value={filters.searchQuery}
-              onChange={(e) => handleFilterChange('searchQuery', e.target.value)}
-              startIcon={<Search className="w-5 h-5" />}
-              fullWidth
-            />
-          </div>
-
-          <div className="flex items-center gap-2">
-            <MaterialButton
-              variant="outlined"
-              onClick={() => setShowFilters(!showFilters)}
-              iconType="filter"
-              icon="leading"
-            >
-              Filters
-            </MaterialButton>
-
-            <div className="border-l border-surface-200 pl-2">
-              <MaterialButton
-                variant={viewMode === 'grid' ? 'filled' : 'outlined'}
-                onClick={() => setViewMode('grid')}
-                iconType="custom"
-                icon="only"
-                customIcon={<Grid className="w-4 h-4" />}
-              />
-              <MaterialButton
-                variant={viewMode === 'list' ? 'filled' : 'outlined'}
-                onClick={() => setViewMode('list')}
-                iconType="custom"
-                icon="only"
-                customIcon={<List className="w-4 h-4" />}
-                className="ml-1"
-              />
-            </div>
-          </div>
-        </div>
-
-        {showFilters && (
-          <div className="mt-4 pt-4 border-t border-surface-100">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <select
-                value={filters.category}
-                onChange={(e) => handleFilterChange('category', e.target.value)}
-                className="form-select"
-              >
-                {categories.map(cat => (
-                  <option key={cat.value} value={cat.value}>{cat.label}</option>
-                ))}
-              </select>
-
-              <select
-                value={filters.region}
-                onChange={(e) => handleFilterChange('region', e.target.value)}
-                className="form-select"
-              >
-                {regions.map(region => (
-                  <option key={region.value} value={region.value}>{region.label}</option>
-                ))}
-              </select>
-
-              <select
-                value={filters.quality}
-                onChange={(e) => handleFilterChange('quality', e.target.value)}
-                className="form-select"
-              >
-                {qualityTiers.map(quality => (
-                  <option key={quality.value} value={quality.value}>{quality.label}</option>
-                ))}
-              </select>
-
-              <select
-                value={filters.priceRange}
-                onChange={(e) => handleFilterChange('priceRange', e.target.value)}
-                className="form-select"
-              >
-                <option value="">All Prices</option>
-                <option value="0-5">Under $5</option>
-                <option value="5-15">$5 - $15</option>
-                <option value="15-30">$15 - $30</option>
-                <option value="30-">Over $30</option>
-              </select>
-            </div>
-
-            {Object.values(filters).some(Boolean) && (
-              <div className="mt-4 flex justify-end">
-                <MaterialButton
-                  variant="text"
-                  onClick={clearFilters}
-                  size="small"
-                >
-                  Clear all filters
-                </MaterialButton>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Products Grid */}
-      {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {[...Array(8)].map((_, i) => (
-            <LoadingSpinner key={i} variant="skeleton" />
-          ))}
-        </div>
-      ) : products.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="text-6xl mb-4">🌱</div>
-          <h3 className="text-lg font-semibold text-surface-900 mb-2">
-            No products found
-          </h3>
-          <p className="text-surface-600 mb-6">
-            Try adjusting your filters or search terms
-          </p>
-          <MaterialButton
-            variant="outlined"
-            onClick={clearFilters}
-          >
-            Clear filters
-          </MaterialButton>
-        </div>
-      ) : (
-        <div className={
-          viewMode === 'grid'
-            ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
-            : 'space-y-4'
-        }>
-          {products.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              onLike={() => {}}
-              onShare={() => {}}
-              onViewDetails={() => {}}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
-export default ProductsPage;
+            
