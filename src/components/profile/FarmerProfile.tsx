@@ -1,93 +1,47 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { MaterialButton } from '../ui/MaterialButton';
-import { MaterialInput } from '../ui/MaterialInput';
-import { LoadingSpinner } from '../ui/LoadingSpinner';
-import { useAuth } from '@/hooks/useAuth';
 import {
-  Camera, Image, Plus, Leaf,
-  Award, Star, ShieldCheck
+  Leaf, Image, Plus, Award,
+  Star, ShieldCheck
 } from 'lucide-react';
 
 interface FarmerProfileProps {
+  isEditing: boolean;
+  formData: {
+    farmStory: string;
+    certifications: string[];
+    specialties: string[];
+  };
+  onFormChange: (field: string, value: any) => void;
+  loading?: boolean;
   className?: string;
 }
 
 export const FarmerProfile: React.FC<FarmerProfileProps> = ({
+  isEditing,
+  formData,
+  onFormChange,
+  loading = false,
   className = ''
 }) => {
-  const { user } = useAuth();
-  const [isEditing, setIsEditing] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    farmStory: user?.metadata?.farmStory || '',
-    certifications: user?.metadata?.certifications || [],
-    specialties: user?.metadata?.specialties || []
-  });
-
-  const handleInputChange = (field: string) => (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setFormData(prev => ({ ...prev, [field]: e.target.value }));
-  };
-
-  const handleSave = async () => {
-    setLoading(true);
-    // Mock save - replace with actual update
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setIsEditing(false);
-    setLoading(false);
-  };
-
-  if (!user || user.role !== 'farmer') return null;
-
   return (
     <div className={`space-y-6 ${className}`}>
       {/* Farm Story Section */}
       <div className="bg-white rounded-xl shadow-sm border border-surface-200 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <Leaf className="w-5 h-5 text-green-600" />
-            <h3 className="text-lg font-semibold text-surface-900">Farm Story</h3>
-          </div>
-          {!isEditing && (
-            <MaterialButton
-              variant="text"
-              size="small"
-              onClick={() => setIsEditing(true)}
-              iconType="edit"
-              icon="leading"
-            >
-              Edit
-            </MaterialButton>
-          )}
+        <div className="flex items-center gap-2 mb-4">
+          <Leaf className="w-5 h-5 text-green-600" />
+          <h3 className="text-lg font-semibold text-surface-900">Farm Story</h3>
         </div>
 
         {isEditing ? (
-          <>
-            <textarea
-              value={formData.farmStory}
-              onChange={handleInputChange('farmStory')}
-              placeholder="Share your farming philosophy, methods, and what makes your produce special..."
-              rows={6}
-              className="w-full px-4 py-3 border border-surface-300 rounded-lg mb-4 focus:ring-2 focus:ring-green-500 focus:border-green-500 resize-none"
-            />
-            <div className="flex justify-end gap-2">
-              <MaterialButton
-                variant="text"
-                onClick={() => setIsEditing(false)}
-                disabled={loading}
-              >
-                Cancel
-              </MaterialButton>
-              <MaterialButton
-                onClick={handleSave}
-                loading={loading}
-                disabled={loading}
-                iconType="save"
-                icon="leading"
-              >
-                Save Changes
-              </MaterialButton>
-            </div>
-          </>
+          <textarea
+            value={formData.farmStory}
+            onChange={(e) => onFormChange('farmStory', e.target.value)}
+            placeholder="Share your farming philosophy, methods, and what makes your produce special..."
+            rows={6}
+            className="w-full px-4 py-3 border border-surface-300 rounded-lg mb-4 focus:ring-2 focus:ring-green-500 focus:border-green-500 resize-none"
+            disabled={loading}
+          />
         ) : (
           <p className="text-surface-700 whitespace-pre-line">
             {formData.farmStory || (
@@ -153,14 +107,17 @@ export const FarmerProfile: React.FC<FarmerProfileProps> = ({
             <Image className="w-5 h-5 text-purple-600" />
             <h3 className="text-lg font-semibold text-surface-900">Farm Gallery</h3>
           </div>
-          <MaterialButton
-            variant="outlined"
-            size="small"
-            iconType="plus"
-            icon="leading"
-          >
-            Add Photos
-          </MaterialButton>
+          {isEditing && (
+            <MaterialButton
+              variant="outlined"
+              size="small"
+              iconType="plus"
+              icon="leading"
+              disabled={loading}
+            >
+              Add Photos
+            </MaterialButton>
+          )}
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
