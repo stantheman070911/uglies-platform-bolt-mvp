@@ -1,7 +1,9 @@
+```typescript
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { MaterialButton } from '../ui/MaterialButton';
 import { useAuth } from '@/hooks/useAuth';
+import { useOnClickOutside } from '@/hooks/useOnClickOutside';
 import { 
   Bell, Search, Menu, X, User, Settings, LogOut, 
   Plus, Users, Package, Home, ChevronDown, Sprout,
@@ -20,9 +22,12 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   const { user, signOut } = useAuth();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const notificationRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
 
   // Mock notifications for demo
   const notifications = [
@@ -34,19 +39,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   const unreadCount = notifications.filter(n => n.unread).length;
 
   // Close dropdowns when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
-        setShowProfileMenu(false);
-      }
-      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
-        setShowNotifications(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  useOnClickOutside(profileMenuRef, () => setShowProfileMenu(false));
+  useOnClickOutside(notificationRef, () => setShowNotifications(false));
+  useOnClickOutside(searchRef, () => setShowMobileSearch(false));
 
   const handleSignOut = async () => {
     await signOut();
@@ -85,7 +80,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               variant="text"
               size="small"
               onClick={onMenuToggle}
-              iconType="menu"
+              iconType="custom"
+              customIcon={<Menu className="w-6 h-6" />}
               icon="only"
               className="lg:hidden mr-2"
               ariaLabel="Toggle menu"
@@ -121,6 +117,16 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
           {/* Right Section - Actions & Profile */}
           <div className="flex items-center space-x-2">
+            {/* Mobile Search Toggle */}
+            <MaterialButton
+              variant="text"
+              size="small"
+              onClick={() => setShowMobileSearch(!showMobileSearch)}
+              iconType="search"
+              icon="only"
+              className="md:hidden"
+              ariaLabel="Toggle search"
+            />
             
             {/* Quick Actions (Desktop) */}
             <div className="hidden lg:flex items-center space-x-1">
@@ -255,23 +261,26 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         </div>
 
         {/* Mobile Search (when expanded) */}
-        <div className="md:hidden pb-3">
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-surface-400" />
+        {showMobileSearch && (
+          <div className="md:hidden pb-3" ref={searchRef}>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-surface-400" />
+              </div>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search..."
+                className="block w-full pl-10 pr-4 py-2 border border-surface-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-surface-50 text-sm"
+              />
             </div>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search..."
-              className="block w-full pl-10 pr-4 py-2 border border-surface-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-surface-50 text-sm"
-            />
           </div>
-        </div>
+        )}
       </div>
     </header>
   );
 };
 
 export default AppHeader;
+```

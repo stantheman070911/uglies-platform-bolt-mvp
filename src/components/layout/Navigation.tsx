@@ -1,3 +1,4 @@
+```typescript
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { MaterialButton } from '../ui/MaterialButton';
@@ -219,3 +220,4 @@ export const Navigation: React.FC<NavigationProps> = ({
 };
 
 export default Navigation;
+```
