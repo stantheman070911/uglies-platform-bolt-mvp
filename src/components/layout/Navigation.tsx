@@ -116,7 +116,7 @@ export const Navigation: React.FC<NavigationProps> = ({
           <div className="p-4 border-b border-surface-100 bg-gradient-to-r from-primary-50 to-secondary-50">
             <div className="flex items-center space-x-3">
               <img
-                src={user?.avatarUrl || `https://ui-avatars.com/api/?name=${user?.displayName}&background=007AFF&color=fff`}
+                src={user?.avatarUrl || \`https://ui-avatars.com/api/?name=${user?.displayName}&background=007AFF&color=fff`}
                 alt={user?.displayName || 'User'}
                 className="w-12 h-12 rounded-full border-2 border-white shadow-sm"
               />
@@ -146,7 +146,7 @@ export const Navigation: React.FC<NavigationProps> = ({
               {currentStats.map((stat, index) => (
                 <div key={index} className="flex items-center justify-between">
                   <span className="text-sm text-surface-600">{stat.label}</span>
-                  <span className={`font-semibold ${stat.color}`}>{stat.value}</span>
+                  <span className={\`font-semibold ${stat.color}`}>{stat.value}</span>
                 </div>
               ))}
             </div>
