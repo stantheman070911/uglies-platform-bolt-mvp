@@ -4,7 +4,7 @@ import { MaterialButton } from '@/components/ui/MaterialButton';
 import { MaterialInput } from '@/components/ui/MaterialInput';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ProductCard } from '@/components/ui/MaterialCard';
-import { ProductService } from '@/services/products';
+import { ProductService, ProductWithDetails } from '@/services/products';
 import { GroupBuyingService } from '@/services/groups';
 import { useAuth } from '@/hooks/useAuth';
 import { Search, Package, Users, Clock, MapPin } from 'lucide-react';
@@ -13,22 +13,22 @@ const CreateGroupPage: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
-  const [selectedProduct, setSelectedProduct] = useState<any>(null);
-  const [products, setProducts] = useState<any[]>([]);
+  const [selectedProduct, setSelectedProduct] = useState<ProductWithDetails | null>(null);
+  const [products, setProducts] = useState<ProductWithDetails[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [groupData, setGroupData] = useState({
     targetQuantity: '',
     deadline: '',
-    deliveryMethod: 'home',
+    deliveryMethod: 'delivery',
     region: user?.region || 'local_area'
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const deliveryMethods = [
-    { value: 'home', label: '🏠 宅配', description: '直接送到府上' },
-    { value: 'store', label: '🏪 超商取貨', description: '全台超商皆可取貨' },
+    { value: 'delivery', label: '🏠 宅配', description: '直接送到府上' },
+    { value: 'shipping', label: '🏪 超商取貨', description: '全台超商皆可取貨' },
     { value: 'pickup', label: '📍 定點取貨', description: '指定地點自取' }
   ];
 
@@ -90,7 +90,7 @@ const CreateGroupPage: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleProductSelect = (product: any) => {
+  const handleProductSelect = (product: ProductWithDetails) => {
     setSelectedProduct(product);
     setStep(2);
   };
