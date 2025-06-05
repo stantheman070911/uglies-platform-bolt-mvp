@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { MaterialButton } from '@/components/ui/MaterialButton';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { JoinGroupModal, ShareGroupModal } from '@/components/ui/Modal';
-import { GroupBuyingService } from '@/services/groups';
+import { GroupBuyingService, FullGroupBuy } from '@/services/groups';
 import { useAuth } from '@/hooks/useAuth';
 import { 
   Users, Clock, TrendingUp, Share2, MapPin,
@@ -13,7 +13,7 @@ import {
 const GroupDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
-  const [group, setGroup] = useState<any>(null);
+  const [group, setGroup] = useState<FullGroupBuy | null>(null);
   const [loading, setLoading] = useState(true);
   const [joinModalOpen, setJoinModalOpen] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
