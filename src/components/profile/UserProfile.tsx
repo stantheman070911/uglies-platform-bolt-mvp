@@ -1,34 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MaterialButton } from '../ui/MaterialButton';
 import { MaterialInput } from '../ui/MaterialInput';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 import { useAuth } from '@/hooks/useAuth';
-import { 
-  Camera, MapPin, Calendar, Star, 
-  Package, Users, Heart, Award 
+import {
+  Camera, MapPin, Calendar, Star,
+  Package, Users, Heart, Award
 } from 'lucide-react';
+import { FarmerProfile } from './FarmerProfile';
 
-interface UserProfileProps {
-  onEditComplete?: () => void;
-  className?: string;
-}
-
-export const UserProfile: React.FC<UserProfileProps> = ({
-  onEditComplete,
-  className = ''
-}) => {
+const UserProfile: React.FC = () => {
   const { user, updateProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
+  
   const [formData, setFormData] = useState({
-    displayName: user?.displayName || '',
-    bio: user?.bio || '',
-    avatarUrl: user?.avatarUrl || '',
-    region: user?.region || 'local_area'
+    displayName: '',
+    bio: '',
+    avatarUrl: '',
+    region: 'local_area',
+    // Farmer-specific fields, stored in `preferences`
+    farmStory: '',
+    certifications: [],
+    specialties: []
   });
+
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        displayName: user.displayName || '',
+        bio: user.bio || '',
+        avatarUrl: user.avatarUrl || '',
+        region: user.region || 'local_area',
+        farmStory: user.preferences?.farmStory || '',
+        certifications: user.preferences?.certifications || [],
+        specialties: user.preferences?.specialties || []
+      });
+    }
+  }, [user]);
+  
   const regions = [
     { value: 'local_area', label: '🏡 Local Area' },
     { value: 'nearby', label: '🌱 Nearby Farms' },
@@ -39,7 +52,8 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   ];
 
   const getUserStats = () => {
-    switch (user?.role) {
+    if (!user) return [];
+    switch (user.role) {
       case 'farmer':
         return [
           { label: 'Products Listed', value: user.stats?.products || 0, icon: Package, color: 'text-green-600' },
@@ -60,9 +74,9 @@ export const UserProfile: React.FC<UserProfileProps> = ({
         ];
     }
   };
-
-  const handleInputChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    setFormData(prev => ({ ...prev, [field]: e.target.value }));
+  
+  const handleFormChange = (field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
@@ -76,8 +90,8 @@ export const UserProfile: React.FC<UserProfileProps> = ({
     try {
       // Mock image upload - replace with actual Supabase storage upload
       await new Promise(resolve => setTimeout(resolve, 1500));
-      const mockUrl = \`https://ui-avatars.com/api/?name=${formData.displayName}&background=22c55e&color=fff`;
-      setFormData(prev => ({ ...prev, avatarUrl: mockUrl }));
+      const mockUrl = `https://ui-avatars.com/api/?name=${formData.displayName}&background=22c55e&color=fff`;
+      handleFormChange('avatarUrl', mockUrl);
     } catch (error) {
       console.error('Image upload failed:', error);
     } finally {
@@ -109,12 +123,16 @@ export const UserProfile: React.FC<UserProfileProps> = ({
         displayName: formData.displayName,
         bio: formData.bio,
         avatarUrl: formData.avatarUrl,
-        region: formData.region
+        region: formData.region,
+        preferences: {
+            farmStory: formData.farmStory,
+            certifications: formData.certifications,
+            specialties: formData.specialties
+        }
       });
 
       if (result.success) {
         setIsEditing(false);
-        onEditComplete?.();
       } else {
         setErrors({ submit: result.error || 'Failed to update profile' });
       }
@@ -127,12 +145,17 @@ export const UserProfile: React.FC<UserProfileProps> = ({
 
   const handleCancel = () => {
     setIsEditing(false);
-    setFormData({
-      displayName: user?.displayName || '',
-      bio: user?.bio || '',
-      avatarUrl: user?.avatarUrl || '',
-      region: user?.region || 'local_area'
-    });
+     if (user) {
+      setFormData({
+        displayName: user.displayName || '',
+        bio: user.bio || '',
+        avatarUrl: user.avatarUrl || '',
+        region: user.region || 'local_area',
+        farmStory: user.preferences?.farmStory || '',
+        certifications: user.preferences?.certifications || [],
+        specialties: user.preferences?.specialties || []
+      });
+    }
     setErrors({});
   };
 
@@ -141,12 +164,11 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   const stats = getUserStats();
 
   return (
-    <div className={\`space-y-6 ${className}`}>
+    <div className="space-y-6">
       {/* Profile Header */}
       <div className="bg-white rounded-xl shadow-sm border border-surface-200 overflow-hidden">
         <div className="bg-gradient-to-r from-green-600 to-green-700 px-6 py-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-            {/* Avatar Section */}
             <div className="relative">
               <div className="w-24 h-24 rounded-full bg-white p-1">
                 {imageUploading ? (
@@ -155,7 +177,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                   </div>
                 ) : (
                   <img
-                    src={formData.avatarUrl || \`https://ui-avatars.com/api/?name=${user.displayName}&background=22c55e&color=fff`}
+                    src={formData.avatarUrl || `https://ui-avatars.com/api/?name=${user.displayName}&background=22c55e&color=fff`}
                     alt={user.displayName}
                     className="w-full h-full rounded-full object-cover"
                   />
@@ -176,20 +198,19 @@ export const UserProfile: React.FC<UserProfileProps> = ({
               )}
             </div>
 
-            {/* Profile Info */}
             <div className="flex-1 text-white">
               {isEditing ? (
                 <div className="space-y-3">
                   <MaterialInput
                     value={formData.displayName}
-                    onChange={handleInputChange('displayName')}
+                    onChange={(e) => handleFormChange('displayName', e.target.value)}
                     error={errors.displayName}
                     className="bg-white"
                     fullWidth
                   />
                   <select
                     value={formData.region}
-                    onChange={handleInputChange('region')}
+                    onChange={(e) => handleFormChange('region', e.target.value)}
                     className="w-full px-3 py-2 border border-surface-300 rounded-lg text-surface-900"
                   >
                     {regions.map(region => (
@@ -221,7 +242,6 @@ export const UserProfile: React.FC<UserProfileProps> = ({
               )}
             </div>
 
-            {/* Action Buttons */}
             <div className="flex gap-2">
               {isEditing ? (
                 <>
@@ -258,12 +278,11 @@ export const UserProfile: React.FC<UserProfileProps> = ({
           </div>
         </div>
 
-        {/* Bio Section */}
         <div className="px-6 py-4">
           {isEditing ? (
             <textarea
               value={formData.bio}
-              onChange={handleInputChange('bio')}
+              onChange={(e) => handleFormChange('bio', e.target.value)}
               placeholder="Tell us about yourself..."
               rows={3}
               className="w-full px-3 py-2 border border-surface-300 rounded-lg resize-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
@@ -279,14 +298,13 @@ export const UserProfile: React.FC<UserProfileProps> = ({
           )}
         </div>
 
-        {/* Stats Grid */}
         <div className="grid grid-cols-3 gap-4 p-6 border-t border-surface-200">
           {stats.map((stat, index) => {
             const IconComponent = stat.icon;
             return (
               <div key={index} className="text-center">
-                <div className={\`inline-flex items-center justify-center w-10 h-10 rounded-full bg-surface-100 mb-2`}>
-                  <IconComponent className={\`w-5 h-5 ${stat.color}`} />
+                <div className={`inline-flex items-center justify-center w-10 h-10 rounded-full bg-surface-100 mb-2`}>
+                  <IconComponent className={`w-5 h-5 ${stat.color}`} />
                 </div>
                 <div className="text-xl font-bold text-surface-900">{stat.value}</div>
                 <div className="text-sm text-surface-600">{stat.label}</div>
@@ -295,8 +313,18 @@ export const UserProfile: React.FC<UserProfileProps> = ({
           })}
         </div>
       </div>
+      
+      {user.role === 'farmer' && (
+        <FarmerProfile 
+            isEditing={isEditing}
+            formData={formData}
+            onFormChange={handleFormChange}
+            onSave={handleSave}
+            onCancel={handleCancel}
+            loading={loading}
+        />
+      )}
 
-      {/* Submit Error */}
       {errors.submit && (
         <div className="p-3 bg-error-50 border border-error-200 rounded-lg">
           <p className="text-error-700 text-sm">{errors.submit}</p>
@@ -305,6 +333,3 @@ export const UserProfile: React.FC<UserProfileProps> = ({
     </div>
   );
 };
-
-export default UserProfile;
-```
