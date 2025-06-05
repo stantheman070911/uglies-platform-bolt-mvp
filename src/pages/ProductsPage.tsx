@@ -201,4 +201,12 @@ const ProductsPage: React.FC = () => {
             color="secondary"
             className="mt-4 sm:mt-0"
           >
-            
+            Add New Product
+          </MaterialButton>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default ProductsPage;
