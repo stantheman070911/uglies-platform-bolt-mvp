@@ -12,6 +12,7 @@ import { Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from '@material-tailwind/react';
 import { AppLayout } from '@/components/layout'; // Assuming this is the correct path
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'; // Assuming this is the correct path
+import { MaterialButton } from '@/components/ui/MaterialButton';
 
 // Import all page components.
 // For a larger application, consider lazy loading these with React.lazy()
