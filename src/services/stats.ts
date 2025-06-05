@@ -1,37 +1,39 @@
 import { supabase, handleSupabaseError } from './supabase';
 
 export class StatsService {
-  static async getTotalFarmers(): Promise<{ success: boolean; data?: number; error?: string }> {
+  /**
+   * Fetches the total number of farmers using a database function.
+   */
+  static async getTotalFarmers(): Promise<{ success: boolean; count: number; error?: string }> {
     try {
-      const { count, error } = await supabase
-        .from('users')
-        .select('*', { count: 'exact', head: true })
-        .eq('role', 'farmer')
-        .eq('is_active', true);
-
+      const { data, error } = await supabase.rpc('get_total_farmers');
       if (error) throw error;
-      return { success: true, data: count || 0 };
-    } catch (error) {
-      return { success: false, error: handleSupabaseError(error) };
+      return { success: true, count: data || 0 };
+    } catch (error: any) {
+      console.error('StatsService.getTotalFarmers error:', error.message);
+      return { success: false, count: 0, error: handleSupabaseError(error) };
     }
   }
 
-  static async getTotalGroups(): Promise<{ success: boolean; data?: number; error?: string }> {
+  /**
+   * Fetches the total number of group buys using a database function.
+   */
+  static async getTotalGroups(): Promise<{ success: boolean; count: number; error?: string }> {
     try {
-      const { count, error } = await supabase
-        .from('group_buys')
-        .select('*', { count: 'exact', head: true })
-        .in('status', ['forming', 'active']);
-
+      const { data, error } = await supabase.rpc('get_total_groups');
       if (error) throw error;
-      return { success: true, data: count || 0 };
-    } catch (error) {
-      return { success: false, error: handleSupabaseError(error) };
+      return { success: true, count: data || 0 };
+    } catch (error: any) {
+      console.error('StatsService.getTotalGroups error:', error.message);
+      return { success: false, count: 0, error: handleSupabaseError(error) };
     }
   }
 
-  static async getAmountSaved(): Promise<{ success: boolean; data?: string; error?: string }> {
-    // For now, return a mock value as calculating actual savings would require complex aggregation
-    return { success: true, data: "$1,234" };
+  /**
+   * Returns a mock value for the total amount saved.
+   */
+  static async getAmountSaved(): Promise<{ success: boolean; amount: string; error?: string }> {
+    // This remains a mock for now, as requested
+    return { success: true, amount: '$1,234' };
   }
 }
