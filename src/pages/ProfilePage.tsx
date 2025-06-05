@@ -91,7 +91,7 @@ const ProfilePage: React.FC = () => {
               <div className="space-y-4">
                 {recentActivity.map((activity, index) => (
                   <div key={index} className="flex items-start space-x-3">
-                    <div className={`w-2 h-2 mt-2 rounded-full ${
+                    <div className={\`w-2 h-2 mt-2 rounded-full ${
                       activity.type === 'group_join' ? 'bg-blue-500' :
                       activity.type === 'product_view' ? 'bg-green-500' :
                       activity.type === 'group_complete' ? 'bg-yellow-500' : 'bg-purple-500'
@@ -110,14 +110,14 @@ const ProfilePage: React.FC = () => {
               <h3 className="text-lg font-semibold text-surface-900 mb-6">Achievements</h3>
               <div className="space-y-4">
                 {achievements.map((achievement, index) => (
-                  <div key={index} className={`flex items-center space-x-3 p-3 rounded-lg ${
+                  <div key={index} className={\`flex items-center space-x-3 p-3 rounded-lg ${
                     achievement.earned ? 'bg-yellow-50' : 'bg-surface-50'
                   }`}>
-                    <Award className={`w-6 h-6 ${
+                    <Award className={\`w-6 h-6 ${
                       achievement.earned ? 'text-yellow-500' : 'text-surface-400'
                     }`} />
                     <div>
-                      <p className={`font-medium ${
+                      <p className={\`font-medium ${
                         achievement.earned ? 'text-surface-900' : 'text-surface-500'
                       }`}>
                         {achievement.title}

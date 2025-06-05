@@ -40,7 +40,7 @@ export const FarmerProfile: React.FC<FarmerProfileProps> = ({
   if (!user || user.role !== 'farmer') return null;
 
   return (
-    <div className={`space-y-6 ${className}`}>
+    <div className={\`space-y-6 ${className}`}>
       {/* Farm Story Section */}
       <div className="bg-white rounded-xl shadow-sm border border-surface-200 p-6">
         <div className="flex items-center justify-between mb-4">
