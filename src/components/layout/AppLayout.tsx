@@ -17,15 +17,15 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   showFooter = true,
   className = ''
 }) => {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isNavOpen, setIsNavOpen] = useState(false);
   const { isAuthenticated } = useAuth();
 
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
+  const toggleNav = () => {
+    setIsNavOpen(!isNavOpen);
   };
 
-  const closeMobileMenu = () => {
-    setIsMobileMenuOpen(false);
+  const closeNav = () => {
+    setIsNavOpen(false);
   };
 
   if (!isAuthenticated) {
@@ -41,15 +41,18 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
       {/* Navigation Sidebar */}
       {showNavigation && (
         <Navigation 
-          isOpen={isMobileMenuOpen}
-          onClose={closeMobileMenu}
+          isOpen={isNavOpen}
+          onClose={closeNav}
         />
       )}
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col lg:ml-0">
+      <div className="flex-1 flex flex-col lg:ml-64">
         {/* Header */}
-        <AppHeader onMenuToggle={toggleMobileMenu} />
+        <AppHeader 
+          onMenuToggle={toggleNav}
+          isNavOpen={isNavOpen}
+        />
 
         {/* Main Content */}
         <main className={`flex-1 p-4 lg:p-6 ${className}`}>
