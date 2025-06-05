@@ -1,14 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { MaterialButton } from '../ui/MaterialButton';
-import { LoadingSpinner } from '../ui/LoadingSpinner';
-import { useAuth } from '@/hooks/useAuth';
-import {
-  Leaf,
-  Award, Star, Certificate
-} from 'lucide-react';
+import { MaterialInput } from '../ui/MaterialInput';
+import { Leaf, Award, Star, Certificate } from 'lucide-react';
 
 interface FarmerProfileProps {
-  className?: string;
   isEditing: boolean;
   formData: {
     farmStory: string;
@@ -16,30 +11,17 @@ interface FarmerProfileProps {
     specialties: string[];
   };
   onFormChange: (field: string, value: any) => void;
-  onSave: () => void;
-  onCancel: () => void;
   loading: boolean;
 }
 
 export const FarmerProfile: React.FC<FarmerProfileProps> = ({
-  className = '',
   isEditing,
   formData,
   onFormChange,
-  onSave,
-  onCancel,
   loading
 }) => {
-  const { user } = useAuth();
-
-  const handleInputChange = (field: string) => (e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
-    onFormChange(field, e.target.value);
-  };
-
-  if (!user || user.role !== 'farmer') return null;
-
   return (
-    <div className={`space-y-6 ${className}`}>
+    <div className="space-y-6">
       {/* Farm Story Section */}
       <div className="bg-white rounded-xl shadow-sm border border-surface-200 p-6">
         <div className="flex items-center justify-between mb-4">
@@ -50,15 +32,14 @@ export const FarmerProfile: React.FC<FarmerProfileProps> = ({
         </div>
 
         {isEditing ? (
-          <>
-            <textarea
-              value={formData.farmStory}
-              onChange={(e) => onFormChange('farmStory', e.target.value)}
-              placeholder="Share your farming philosophy, methods, and what makes your produce special..."
-              rows={6}
-              className="w-full px-4 py-3 border border-surface-300 rounded-lg mb-4 focus:ring-2 focus:ring-green-500 focus:border-green-500 resize-none"
-            />
-          </>
+          <textarea
+            value={formData.farmStory}
+            onChange={(e) => onFormChange('farmStory', e.target.value)}
+            placeholder="Share your farming philosophy, methods, and what makes your produce special..."
+            rows={6}
+            className="w-full px-4 py-3 border border-surface-300 rounded-lg mb-4 focus:ring-2 focus:ring-green-500 focus:border-green-500 resize-none"
+            disabled={loading}
+          />
         ) : (
           <p className="text-surface-700 whitespace-pre-line">
             {formData.farmStory || (
@@ -83,6 +64,7 @@ export const FarmerProfile: React.FC<FarmerProfileProps> = ({
                 value={formData.certifications.join(', ')}
                 onChange={(e) => onFormChange('certifications', e.target.value.split(',').map(c => c.trim()))}
                 placeholder="e.g. USDA Organic, Non-GMO"
+                disabled={loading}
               />
             ) : (
               formData.certifications.length > 0 ? (
@@ -108,11 +90,12 @@ export const FarmerProfile: React.FC<FarmerProfileProps> = ({
             <h3 className="text-lg font-semibold text-surface-900">Specialties</h3>
           </div>
           <div className="space-y-2">
-             {isEditing ? (
+            {isEditing ? (
               <MaterialInput
                 value={formData.specialties.join(', ')}
                 onChange={(e) => onFormChange('specialties', e.target.value.split(',').map(s => s.trim()))}
                 placeholder="e.g. Heirloom Tomatoes, Microgreens"
+                disabled={loading}
               />
             ) : (
               formData.specialties.length > 0 ? (

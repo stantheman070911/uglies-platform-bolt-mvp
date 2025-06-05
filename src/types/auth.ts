@@ -11,11 +11,18 @@ export interface User {
   role: UserRole;
   displayName: string;
   avatarUrl?: string;
+  bio?: string;
+  region?: string;
   createdAt: string;
   lastLogin?: string;
   isVerified: boolean;
   isActive: boolean;
-  metadata?: Record<string, any>;
+  preferences: Record<string, any>;
+  stats?: {
+    products: number;
+    groups: number;
+    participations: number;
+  };
 }
 
 export interface AuthState {
