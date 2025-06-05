@@ -1,12 +1,93 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { MaterialButton } from '@/components/ui/MaterialButton';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { ProductCard } from '@/components/ui/MaterialCard';
+import { GroupCard } from '@/components/ui/MaterialCard';
+import { StatsService } from '@/services/stats';
+import { ProductService } from '@/services/products';
+import { GroupBuyingService } from '@/services/groups';
 import { 
   Sprout, Users, ShoppingBag, 
   Globe, ArrowRight, Star, Truck, Heart,
-  MapPin
+  MapPin, Plus, Search, Filter, Menu, User,
+  Home, Bell, Settings, Package
 } from 'lucide-react';
 
 const HomePage: React.FC = () => {
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalFarmers: 0,
+    totalGroups: 0,
+    amountSaved: "$0"
+  });
+  const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
+  const [activeGroups, setActiveGroups] = useState<any[]>([]);
+
+  useEffect(() => {
+    loadPageData();
+
+    // Subscribe to group changes
+    const subscription = GroupBuyingService.subscribeToAllGroupChanges(() => {
+      loadActiveGroups();
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const loadPageData = async () => {
+    setLoading(true);
+    try {
+      // Load all data in parallel
+      const [farmersResult, groupsResult, savingsResult, productsResult, groupsDataResult] = await Promise.all([
+        StatsService.getTotalFarmers(),
+        StatsService.getTotalGroups(),
+        StatsService.getAmountSaved(),
+        ProductService.getFeaturedProducts(3),
+        GroupBuyingService.getActiveGroups(undefined, 3)
+      ]);
+
+      setStats({
+        totalFarmers: farmersResult.data || 0,
+        totalGroups: groupsResult.data || 0,
+        amountSaved: savingsResult.data || "$0"
+      });
+
+      if (productsResult.success) {
+        setFeaturedProducts(productsResult.data || []);
+      }
+
+      if (groupsDataResult.success) {
+        setActiveGroups(groupsDataResult.data || []);
+      }
+    } catch (error) {
+      console.error('Error loading homepage data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadActiveGroups = async () => {
+    try {
+      const result = await GroupBuyingService.getActiveGroups(undefined, 3);
+      if (result.success) {
+        setActiveGroups(result.data || []);
+      }
+    } catch (error) {
+      console.error('Error loading active groups:', error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner message="Loading..." />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-12">
       {/* Hero Section */}
@@ -23,7 +104,7 @@ const HomePage: React.FC = () => {
               For Everyone
             </h1>
             <p className="text-green-50 text-lg max-w-xl">
-              Join the agricultural revolution. UGLIES connects farmers directly with consumers through group buying power, eliminating middlemen and reducing food waste.
+              Join {stats.totalFarmers} farmers and save through group buying power. Our community has already saved {stats.amountSaved} together!
             </p>
             <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 pt-2">
               <Link 
@@ -43,87 +124,17 @@ const HomePage: React.FC = () => {
             </div>
           </div>
           
-          <div className="hidden lg:flex justify-center">
-            <div className="relative w-full h-96">
-              <div className="absolute top-0 right-0 bg-white bg-opacity-90 rounded-lg shadow-xl p-6 w-64 transform rotate-3 z-10">
-                <div className="flex items-center space-x-3 mb-3">
-                  <div className="bg-green-100 p-2 rounded-full">
-                    <Sprout size={20} className="text-green-600" />
-                  </div>
-                  <h3 className="font-semibold text-green-800">Organic Produce</h3>
-                </div>
-                <p className="text-sm text-gray-600">
-                  Save up to 40% on organic produce through group buying
-                </p>
-              </div>
-              
-              <div className="absolute bottom-0 left-0 bg-white bg-opacity-90 rounded-lg shadow-xl p-6 w-64 transform -rotate-2 z-20">
-                <div className="flex items-center space-x-3 mb-3">
-                  <div className="bg-yellow-100 p-2 rounded-full">
-                    <Users size={20} className="text-yellow-600" />
-                  </div>
-                  <h3 className="font-semibold text-yellow-800">Group Buying</h3>
-                </div>
-                <p className="text-sm text-gray-600">
-                  Join 5,000+ active groups across 120 countries
-                </p>
-              </div>
-              
-              {/* Semi-transparent central image */}
-              <div className="absolute inset-0 flex items-center justify-center opacity-70">
-                <img 
-                  src="https://images.pexels.com/photos/5529599/pexels-photo-5529599.jpeg" 
-                  alt="Farmer with fresh produce" 
-                  className="object-cover rounded-lg max-w-full max-h-full"
-                />
-              </div>
+          {/* Stats Cards */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-white bg-opacity-10 backdrop-blur-lg rounded-xl p-6 text-white">
+              <Users className="w-8 h-8 mb-2" />
+              <div className="text-3xl font-bold mb-1">{stats.totalGroups}</div>
+              <div className="text-green-100">Active Groups</div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900">How UGLIES Works</h2>
-            <p className="mt-4 text-xl text-gray-600 max-w-3xl mx-auto">
-              Connecting farmers and consumers through innovative social commerce
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Feature 1 */}
-            <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100 transition-all hover:shadow-lg">
-              <div className="bg-green-100 rounded-full w-12 h-12 flex items-center justify-center mb-4">
-                <Sprout className="text-green-600" size={24} />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Farmers List Produce</h3>
-              <p className="text-gray-600">
-                Farmers upload their available produce, set baseline prices, and specify minimum order quantities.
-              </p>
-            </div>
-            
-            {/* Feature 2 */}
-            <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100 transition-all hover:shadow-lg">
-              <div className="bg-yellow-100 rounded-full w-12 h-12 flex items-center justify-center mb-4">
-                <Users className="text-yellow-600" size={24} />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Consumers Join Groups</h3>
-              <p className="text-gray-600">
-                Consumers join group buys to unlock volume discounts, with prices dropping as more people join.
-              </p>
-            </div>
-            
-            {/* Feature 3 */}
-            <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100 transition-all hover:shadow-lg">
-              <div className="bg-red-100 rounded-full w-12 h-12 flex items-center justify-center mb-4">
-                <Truck className="text-red-600" size={24} />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Direct Delivery</h3>
-              <p className="text-gray-600">
-                Once the group buy completes, farmers deliver directly to local distribution points or homes.
-              </p>
+            <div className="bg-white bg-opacity-10 backdrop-blur-lg rounded-xl p-6 text-white">
+              <Sprout className="w-8 h-8 mb-2" />
+              <div className="text-3xl font-bold mb-1">{stats.totalFarmers}</div>
+              <div className="text-green-100">Local Farmers</div>
             </div>
           </div>
         </div>
@@ -144,60 +155,13 @@ const HomePage: React.FC = () => {
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Sample Group Buy Cards */}
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-                <div className="relative h-40 overflow-hidden">
-                  <img 
-                    src={`https://images.pexels.com/photos/${3000 + i * 100}/pexels-photo-${3000 + i * 100}.jpeg`} 
-                    alt="Fresh produce" 
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute top-0 left-0 m-3">
-                    <span className="badge badge-success">
-                      {i === 1 ? '70% Complete' : i === 2 ? '45% Complete' : '25% Complete'}
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="p-5">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                        {i === 1 ? 'Organic Avocados' : i === 2 ? 'Fresh Strawberries' : 'Heirloom Tomatoes'}
-                      </h3>
-                      <p className="text-sm text-gray-500 mb-2">
-                        {i === 1 ? 'Ends in 2 days' : i === 2 ? 'Ends in 8 hours' : 'Ends in 3 days'}
-                      </p>
-                    </div>
-                    <div className="flex items-center">
-                      <Star size={16} className="text-yellow-500 fill-current" />
-                      <span className="text-sm font-medium ml-1">{4 + i * 0.1}</span>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-3 mb-4">
-                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-green-500 rounded-full"
-                        style={{ width: i === 1 ? '70%' : i === 2 ? '45%' : '25%' }}
-                      ></div>
-                    </div>
-                    <div className="flex justify-between mt-1 text-xs text-gray-500">
-                      <span>{i === 1 ? '14/20' : i === 2 ? '9/20' : '5/20'} participants</span>
-                      <span>{i === 1 ? '$2.15/lb' : i === 2 ? '$3.25/box' : '$2.75/lb'}</span>
-                    </div>
-                  </div>
-                  
-                  <Link 
-                    to={`/groups/${i}`} 
-                    className="btn-primary w-full text-center flex items-center justify-center"
-                  >
-                    Join Group
-                    <Users size={16} className="ml-2" />
-                  </Link>
-                </div>
-              </div>
+            {activeGroups.map((group) => (
+              <GroupCard
+                key={group.id}
+                group={group}
+                onJoin={() => {}}
+                onViewDetails={() => {}}
+              />
             ))}
           </div>
         </div>
@@ -207,54 +171,19 @@ const HomePage: React.FC = () => {
       <section className="py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900">Featured Farmers</h2>
+            <h2 className="text-3xl font-bold text-gray-900">Featured Products</h2>
             <p className="mt-4 text-xl text-gray-600">
-              Meet the producers who grow your food with care
+              Discover quality goods from local farmers
             </p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {/* Sample Farmer Cards */}
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition-all">
-                <div className="flex">
-                  <div className="w-1/3">
-                    <img 
-                      src={`https://images.pexels.com/photos/${5000 + i * 100}/pexels-photo-${5000 + i * 100}.jpeg`}
-                      alt={`Farmer ${i}`}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="w-2/3 p-4">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                      {i === 1 ? 'Green Valley Farms' : i === 2 ? 'Sunshine Organics' : 'Heritage Roots'}
-                    </h3>
-                    <p className="text-sm text-gray-500 flex items-center mb-2">
-                      <MapPin size={14} className="mr-1" />
-                      {i === 1 ? 'California, USA' : i === 2 ? 'Ontario, Canada' : 'Oaxaca, Mexico'}
-                    </p>
-                    <div className="flex items-center mb-3">
-                      {[...Array(5)].map((_, j) => (
-                        <Star 
-                          key={j} 
-                          size={14} 
-                          className={`${j < 4 ? 'text-yellow-500 fill-current' : 'text-gray-300'}`}
-                        />
-                      ))}
-                      <span className="text-xs text-gray-500 ml-1">
-                        ({i === 1 ? '234' : i === 2 ? '186' : '127'} reviews)
-                      </span>
-                    </div>
-                    <Link 
-                      to={`/farmers/${i}`}
-                      className="text-sm text-green-600 hover:text-green-700 font-medium flex items-center"
-                    >
-                      View Profile
-                      <ArrowRight size={14} className="ml-1" />
-                    </Link>
-                  </div>
-                </div>
-              </div>
+            {featuredProducts.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                onViewDetails={() => {}}
+              />
             ))}
           </div>
         </div>
