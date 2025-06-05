@@ -14,7 +14,7 @@ const UserProfile: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     displayName: '',
     bio: '',
@@ -41,7 +41,7 @@ const UserProfile: React.FC = () => {
       });
     }
   }, [user]);
-  
+
   const regions = [
     { value: 'local_area', label: '🏡 Local Area' },
     { value: 'nearby', label: '🌱 Nearby Farms' },
@@ -74,7 +74,7 @@ const UserProfile: React.FC = () => {
         ];
     }
   };
-  
+
   const handleFormChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
@@ -183,7 +183,7 @@ const UserProfile: React.FC = () => {
                   />
                 )}
               </div>
-              
+
               {isEditing && (
                 <label className="absolute bottom-0 right-0 bg-white rounded-full p-2 shadow-lg cursor-pointer hover:bg-surface-50">
                   <Camera className="w-4 h-4 text-surface-600" />
@@ -313,9 +313,9 @@ const UserProfile: React.FC = () => {
           })}
         </div>
       </div>
-      
+
       {user.role === 'farmer' && (
-        <FarmerProfile 
+        <FarmerProfile
             isEditing={isEditing}
             formData={formData}
             onFormChange={handleFormChange}
@@ -333,3 +333,5 @@ const UserProfile: React.FC = () => {
     </div>
   );
 };
+
+export default UserProfile;
