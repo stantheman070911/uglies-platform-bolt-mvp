@@ -77,7 +77,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
     try {
       // Mock image upload - replace with actual Supabase storage upload
       await new Promise(resolve => setTimeout(resolve, 1500));
-      const mockUrl = `https://ui-avatars.com/api/?name=${formData.displayName}&background=22c55e&color=fff`;
+      const mockUrl = \`https://ui-avatars.com/api/?name=${formData.displayName}&background=22c55e&color=fff`;
       setFormData(prev => ({ ...prev, avatarUrl: mockUrl }));
     } catch (error) {
       console.error('Image upload failed:', error);
@@ -142,7 +142,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   const stats = getUserStats();
 
   return (
-    <div className={`space-y-6 ${className}`}>
+    <div className={\`space-y-6 ${className}`}>
       {/* Profile Header */}
       <div className="bg-white rounded-xl shadow-sm border border-surface-200 overflow-hidden">
         <div className="bg-gradient-to-r from-green-600 to-green-700 px-6 py-8">
@@ -156,7 +156,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                   </div>
                 ) : (
                   <img
-                    src={formData.avatarUrl || `https://ui-avatars.com/api/?name=${user.displayName}&background=22c55e&color=fff`}
+                    src={formData.avatarUrl || \`https://ui-avatars.com/api/?name=${user.displayName}&background=22c55e&color=fff`}
                     alt={user.displayName}
                     className="w-full h-full rounded-full object-cover"
                   />
@@ -286,8 +286,8 @@ export const UserProfile: React.FC<UserProfileProps> = ({
             const IconComponent = stat.icon;
             return (
               <div key={index} className="text-center">
-                <div className={`inline-flex items-center justify-center w-10 h-10 rounded-full bg-surface-100 mb-2`}>
-                  <IconComponent className={`w-5 h-5 ${stat.color}`} />
+                <div className={\`inline-flex items-center justify-center w-10 h-10 rounded-full bg-surface-100 mb-2`}>
+                  <IconComponent className={\`w-5 h-5 ${stat.color}`} />
                 </div>
                 <div className="text-xl font-bold text-surface-900">{stat.value}</div>
                 <div className="text-sm text-surface-600">{stat.label}</div>
